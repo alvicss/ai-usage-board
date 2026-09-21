@@ -1,0 +1,185 @@
+/*
+ * 檔案：styles/base.css
+ * 用途：小工具共用的基礎樣式：CSS 變數的保底值、透明視窗、小工具外框、頂端設定警告、右上角三顆按鈕、
+ *       重複開啟程式時的「閃一下提示位置」外框，以及瀏覽器預覽用的示意桌布。
+ *       顏色、圓角、字型一律用 CSS 變數（--w-*），由 themes/<主題>.css 依 data-theme＋data-scheme 定義；
+ *       尺寸寫成「43 的 px 值 × var(--scale)」，--scale 由 WidgetView 依視窗大小算出（utils/layout.ts）。
+ *       小工具根元素的其他屬性：data-material（這台 Windows 有沒有 Acrylic）。
+ * 誰會用到：main.ts 載入；WidgetView、ToolbarButtons、設定頁預覽 WidgetPreview。
+ */
+
+/* ---------- 變數的保底值（主題 CSS 會覆寫） ---------- */
+:root {
+  --scale: 1;
+  /* 小工具四周的透明邊（警示外發光才不會被切掉）；玻璃主題套 Acrylic 時為 0，卡片貼齊視窗 */
+  --shell-pad: 6px;
+  --w-bg: #16191d;
+  --w-border: #2a2f36;
+  --w-border-glow: none;
+  --w-line: #2a2f36;
+  --w-ink: #eceff3;
+  --w-muted: #8c95a1;
+  --w-track: #262b31;
+  --w-hover: rgba(127, 127, 127, 0.14);
+  --w-reason: #e0a43a;
+  --w-alert: #ff3b3b;
+  --w-radius: 10px;
+  --w-shadow: none;
+  --w-backdrop: none;
+  --w-font: "Segoe UI Variable Text", "Segoe UI", "Microsoft JhengHei UI", sans-serif;
+  --w-num-font: "Segoe UI Variable Display", "Segoe UI", "Microsoft JhengHei UI", sans-serif;
+  --w-num-weight: 500;
+  --w-num-size: 20px;
+  --bar-h: 6px;
+  --bar-radius: 99px;
+  --codex-dot: var(--w-ink);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* 視窗本身完全透明，只有卡片有底色 */
+html,
+body,
+#app {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: transparent;
+}
+
+button {
+  font: inherit;
+}
+
+/* ---------- 小工具外框 ---------- */
+.widget-shell {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  /* 四周留一點透明邊，警示外發光才不會被視窗邊緣切掉 */
+  padding: var(--shell-pad);
+  color: var(--w-ink);
+  font-family: var(--w-font);
+  font-size: calc(14px * var(--scale));
+  font-variant-numeric: tabular-nums;
+  /* 整體不透明度套在最外層（43「整體不透明度」） */
+  opacity: var(--w-opacity, 1);
+  user-select: none;
+}
+
+.cards-area {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
+
+/* 設定檔格式錯誤時的頂端警告（FR-9） */
+.settings-banner {
+  margin: 0 0 4px;
+  padding: calc(3px * var(--scale)) calc(8px * var(--scale));
+  overflow: hidden;
+  border: 1px solid var(--w-reason);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--w-reason) 18%, var(--w-bg));
+  color: var(--w-ink);
+  font-size: calc(11px * var(--scale));
+  line-height: 1.35;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* ---------- 右上角三顆按鈕（固定在小工具右上角） ---------- */
+.toolbar {
+  position: absolute;
+  z-index: 5;
+  top: calc(12px * var(--scale));
+  right: calc(12px * var(--scale));
+  display: flex;
+  gap: 2px;
+  /* 平常 45% 透明度，滑鼠移到小工具上時 100% */
+  opacity: 0.45;
+  transition: opacity 200ms;
+}
+
+.widget-shell:hover .toolbar {
+  opacity: 1;
+}
+
+.tool-button {
+  display: grid;
+  width: calc(26px * var(--scale));
+  height: calc(26px * var(--scale));
+  padding: 0;
+  place-items: center;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--w-ink);
+  cursor: pointer;
+}
+
+.tool-button:hover {
+  background: var(--w-hover);
+}
+
+.tool-button:disabled {
+  cursor: default;
+}
+
+.tool-button svg {
+  width: calc(15px * var(--scale));
+  height: calc(15px * var(--scale));
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* 查詢中：⟳ 每秒轉一圈 */
+.tool-button.spinning svg {
+  animation: spin 1s linear infinite;
+}
+
+/* ---------- 重複開啟程式時閃一下提示位置（FR-14 單一執行個體） ---------- */
+.widget-shell.flashing::before {
+  position: absolute;
+  z-index: 10;
+  inset: 1px;
+  border: 2px solid var(--w-ink);
+  border-radius: calc(var(--w-radius) + var(--shell-pad) - 2px);
+  box-shadow: 0 0 calc(14px * var(--scale)) var(--w-ink);
+  content: "";
+  pointer-events: none;
+  /* 0.6 秒一次、閃三次，共 1.8 秒（與 Rust 的 FLASH_DURATION 相同） */
+  animation: widget-flash 0.6s ease-in-out 3;
+}
+
+/* ---------- 瀏覽器預覽用（只在 npm run dev 用）：固定大小的框（網址 size=寬x高），四周留 18px 露出桌布 ---------- */
+body[data-preview-frame="on"] #app {
+  width: var(--preview-width);
+  height: var(--preview-height);
+  margin: 18px;
+}
+
+/* ---------- 瀏覽器預覽用的示意桌布（網址 stage=1，只在 npm run dev 用；顏色與畫面示意的主題展示區相同） ---------- */
+body[data-preview-stage="dark"] {
+  background:
+    radial-gradient(70% 60% at 70% 80%, rgba(255, 176, 124, 0.45), transparent 70%),
+    linear-gradient(180deg, #1c2541 0%, #3a506b 60%, #b9876a 100%);
+}
+
+body[data-preview-stage="light"] {
+  background:
+    radial-gradient(120% 70% at 18% 112%, #6e9bbf 42%, transparent 43%),
+    radial-gradient(95% 62% at 86% 118%, #86aecf 46%, transparent 47%),
+    radial-gradient(45% 40% at 72% 28%, rgba(255, 244, 214, 0.9), transparent 70%),
+    linear-gradient(180deg, #8db9e8 0%, #c7ddf3 55%, #eef3f8 100%);
+}

@@ -1,0 +1,6 @@
+# 文件搜尋排除：忽略已停止維護的歷史，不影響 Git 或指名讀取。
+# 搜尋工具不支援 .ignore 時，需在搜尋命令明列相同排除路徑。
+docs/logs/
+docs/archive/
+docs/**/*-archive/
+docs/**/*-archive.md

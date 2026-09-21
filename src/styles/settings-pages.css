@@ -1,0 +1,201 @@
+/*
+ * 檔案：styles/settings-pages.css
+ * 用途：設定視窗各頁專屬的樣式：外觀頁的即時預覽（示意桌布分白天／夜晚）與主題縮圖、卡片邊框編輯區，
+ *       服務頁的服務區塊、額度勾選、「新」標記、保險絲提示，關於頁。
+ *       共用的版面與欄位樣式在 styles/settings.css。
+ * 誰會用到：main.ts 載入；components/settings/ 底下的 AppearancePage、WidgetPreview、BorderSettings、
+ *           ProviderSection、AboutPage。
+ */
+
+/* ---------- 外觀頁：即時預覽 ---------- */
+.preview-block {
+  display: grid;
+  gap: 6px;
+  justify-items: start;
+}
+
+/* 像一小塊桌布，玻璃主題才看得出透光的效果（色彩與畫面示意的主題展示區相同：暗色是夜晚、亮色是白天） */
+.preview-stage {
+  padding: 14px;
+  border-radius: 12px;
+  background:
+    radial-gradient(70% 60% at 70% 80%, rgba(255, 176, 124, 0.45), transparent 70%),
+    linear-gradient(180deg, #1c2541 0%, #3a506b 60%, #b9876a 100%);
+}
+
+.preview-stage[data-stage="light"] {
+  background:
+    radial-gradient(120% 70% at 18% 112%, #6e9bbf 42%, transparent 43%),
+    radial-gradient(95% 62% at 86% 118%, #86aecf 46%, transparent 47%),
+    radial-gradient(45% 40% at 72% 28%, rgba(255, 244, 214, 0.9), transparent 70%),
+    linear-gradient(180deg, #8db9e8 0%, #c7ddf3 55%, #eef3f8 100%);
+}
+
+/* 與小工具預設大小相同（360×230），卡片版面才和實際一致 */
+.preview-widget {
+  width: 360px;
+  height: 230px;
+}
+
+/* ---------- 外觀頁：主題縮圖（五張，霓虹標「僅暗色」） ---------- */
+.theme-thumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* 加上 .settings-shell 提高優先權，蓋過控制項共用的字色與字型 */
+.settings-shell .theme-thumb {
+  position: relative;
+  display: grid;
+  align-content: end;
+  width: 64px;
+  height: 48px;
+  padding: 3px 5px;
+  overflow: hidden;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  color: #ffffff;
+  font-size: 11px;
+  text-align: left;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+  cursor: pointer;
+}
+
+.settings-shell .theme-thumb[aria-pressed="true"] {
+  border-color: var(--w-ink);
+}
+
+.settings-shell .theme-thumb small {
+  font-size: 9.5px;
+  opacity: 0.85;
+}
+
+.settings-shell .theme-thumb[data-thumb="glass"] {
+  background: linear-gradient(135deg, #3a506b, #c88e6a);
+}
+
+.settings-shell .theme-thumb[data-thumb="minimal"] {
+  background: #f5f7fa;
+  color: #15191e;
+  text-shadow: none;
+  box-shadow: inset 0 0 0 1px #e1e5ea;
+}
+
+.settings-shell .theme-thumb[data-thumb="terminal"] {
+  background: #0c0f0a;
+  color: #cfefcb;
+}
+
+.settings-shell .theme-thumb[data-thumb="gauge"] {
+  background: radial-gradient(circle at 50% 40%, #2c313a, #1a1d22);
+}
+
+.settings-shell .theme-thumb[data-thumb="neon"] {
+  background: linear-gradient(135deg, #0b0820, #1a0f3d);
+  box-shadow: inset 0 0 0 1px #22e4ff;
+}
+
+/* ---------- 外觀頁：卡片邊框（標題註明目前改的是哪個主題＋色系） ---------- */
+.border-target {
+  margin: 0;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+/* ---------- 服務頁 ---------- */
+.service {
+  display: grid;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--w-line);
+  border-radius: 9px;
+}
+
+.service-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.service-body {
+  display: grid;
+  gap: 10px;
+}
+
+/* 停用的服務：設定仍可改，但淡化表示目前不會查詢 */
+.service-body.disabled {
+  opacity: 0.55;
+}
+
+.service-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--w-ink);
+}
+
+/* 服務代表色（43「服務代表色」）；Codex 用主要文字色 */
+.service-dot.claude {
+  background: #d4a27f;
+}
+
+.service-dot.antigravity {
+  background: #5b8def;
+}
+
+.cli-control {
+  display: flex;
+  gap: 6px;
+}
+
+.path-input {
+  flex: 1;
+  min-width: 0;
+}
+
+/* 自動偵測到的完整路徑很長：允許在任何位置換行，不要把「自動偵測：」單獨擠成一行 */
+.path-text {
+  overflow-wrap: anywhere;
+}
+
+.quota-checks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  font-size: 13px;
+}
+
+.badge-new {
+  padding: 0 6px;
+  border-radius: 99px;
+  background: var(--s-new);
+  color: #ffffff;
+  font-size: 10.5px;
+}
+
+/* Antigravity 保險絲跳脫的提示（琥珀色虛線框，與畫面示意相同） */
+.fuse-box {
+  display: grid;
+  gap: 6px;
+  justify-items: start;
+  padding: 8px 10px;
+  border: 1px dashed var(--w-reason);
+  border-radius: 7px;
+  font-size: 12.5px;
+}
+
+.fuse-box p {
+  margin: 0;
+}
+
+/* ---------- 關於頁 ---------- */
+.about-page p {
+  margin: 0;
+}
+
+.about-page .app-name {
+  font-size: 22px;
+  font-weight: 700;
+}

@@ -1,0 +1,64 @@
+/*
+ * 檔案：themes/neon.css
+ * 用途：霓虹主題（43「neon 霓虹」）：深藍紫夜色、青到洋紅的發光外框、Orbitron 字型（以 OFL 授權內嵌，main.ts 載入）。
+ *       只有暗色（發光要靠暗底），色系設定不影響它（utils/appearance.ts 的 resolveScheme 固定回傳 dark）。
+ *       色碼與畫面示意 .t-neon 一致。
+ *       卡片邊框（FR-18）：
+ *       - 主題預設：邊框本身透明，用「卡片背景的 border-box 層」畫出青→洋紅漸層外框，外發光是 --w-border-glow；
+ *       - 自訂顏色：小工具把 --w-border 換成該色、--w-border-glow 換成同色外發光，漸層外框拿掉（data-border="custom"）；
+ *       - 無邊框：--w-border 透明、--w-border-glow 為 none，漸層外框也拿掉（data-border="none"）。
+ * 誰會用到：WidgetView 的根元素（data-theme="neon"）、設定頁預覽。
+ */
+
+[data-theme="neon"] {
+  --w-bg: linear-gradient(135deg, #0b0820, #1a0f3d);
+  --w-border: transparent;
+  /* 預設的漸層外框與外發光（FR-18 自訂顏色／無邊框時由小工具覆寫 --w-border、--w-border-glow） */
+  --neon-frame: linear-gradient(135deg, #22e4ff, #ff3dcb);
+  --w-border-glow: 0 0 12px rgba(34, 228, 255, 0.35), 0 0 24px rgba(255, 61, 203, 0.22);
+  /* 霓虹卡片的陰影就是外發光 */
+  --w-shadow: var(--w-border-glow);
+  --w-line: transparent;
+  --w-ink: #eae6ff;
+  --w-muted: #9a8fd6;
+  --w-track: rgba(154, 143, 214, 0.18);
+  --w-hover: rgba(34, 228, 255, 0.12);
+  --w-reason: #e0a43a;
+  --w-radius: 12px;
+  --w-backdrop: none;
+  --w-font: "Segoe UI", "Microsoft JhengHei UI", sans-serif;
+  --w-name-font: Orbitron, Bahnschrift, sans-serif;
+  --w-num-font: Orbitron, Bahnschrift, sans-serif;
+  --w-num-weight: 500;
+  --w-num-size: 18px;
+  --bar-h: 4px;
+  --bar-radius: 99px;
+  --codex-dot: #eae6ff;
+}
+
+/* 卡片：1.5px 邊框；主題預設時背景分兩層：內容區是夜色漸層、邊框區是青→洋紅漸層 */
+[data-theme="neon"] .provider-card {
+  border-width: 1.5px;
+  background:
+    var(--w-bg) padding-box,
+    var(--neon-frame) border-box;
+}
+
+/* 自訂顏色或無邊框：拿掉漸層外框，只留夜色背景（邊框顏色由 --w-border 決定） */
+[data-theme="neon"][data-border="custom"] .provider-card,
+[data-theme="neon"][data-border="none"] .provider-card {
+  background: var(--w-bg);
+}
+
+/* 服務名稱與百分比帶淡淡的外發光 */
+[data-theme="neon"] .provider-name,
+[data-theme="neon"] .quota-percent {
+  text-shadow: 0 0 8px currentColor;
+}
+
+/* 進度條：同色強發光 */
+[data-theme="neon"] .usage-fill {
+  box-shadow:
+    0 0 10px var(--fill-color),
+    0 0 4px var(--fill-color);
+}

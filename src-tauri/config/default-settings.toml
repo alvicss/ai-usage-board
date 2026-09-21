@@ -1,0 +1,61 @@
+# ==========================================================
+# AI Usage Board 設定檔 / Settings file
+# 可在程式的「設定」畫面修改；也可直接編輯本檔，存檔後重新啟動程式生效。
+# Edit in the Settings window, or edit this file and restart the app.
+# 格式錯誤時，程式會用預設值啟動，並告訴你哪一行有問題。
+# ==========================================================
+
+schema_version = 1                 # 設定檔格式版本，請勿修改 / Do not change
+
+[general]
+language = "auto"                  # 介面語言 Language：auto（Windows 顯示語言是中文或地區是台港澳→繁中，其他→英文）/ zh-TW / en
+autostart = false                  # 開機自動啟動 Start with Windows：true / false
+refresh_interval_minutes = 10      # 自動更新間隔（分鐘）1～120；越小越即時、越耗資源
+alert_threshold_percent = 80       # 警示門檻（已用 %）50～99 / Alert when usage ≥ this
+query_timeout_seconds = 45         # 單家查詢逾時（秒）10～120 / Per-CLI query timeout
+log_retention_days = 7             # log 保留天數 1～90 / Days to keep log files
+
+[display]
+mode = "carousel"                  # 顯示方式：carousel（輪播）/ overview（並排）
+carousel_seconds = 8               # 輪播每家停留秒數 3～60
+carousel_animation = "slide"       # 輪播動畫：slide（左右滑動）/ flip（3D 翻牌）
+reset_time_format = "countdown"    # 重置時間：countdown（倒數）/ absolute（絕對時間）/ both（兩者）
+theme = "glass"                    # 主題 Theme：glass / minimal / terminal / gauge / neon
+color_scheme = "auto"              # 色系 Color scheme：auto（跟隨 Windows）/ light / dark；neon 固定暗色
+opacity_percent = 100              # 整體不透明度 30～100 / Widget opacity
+
+[colors]
+low = "#01B468"                    # 0% 的顏色（綠）/ Color at 0%
+mid = "#EA7500"                    # 中間色（預設橘）/ Middle color
+high = "#FF0000"                   # 100% 的顏色（紅）/ Color at 100%
+mid_position = 60                  # 中間色位置（%）1～99；越大，0% 的顏色維持越久 / Middle color position
+
+[borders]
+alert_frame = true                 # 超過門檻時是否顯示警示外框 Show alert frame：true / false
+alert_color = "#FF3B3B"            # 警示顏色（外框、該行底色、圓點）/ Alert color
+
+[borders.card]                     # 各主題卡片邊框：default（主題預設）/ none（無邊框）/ #RRGGBB（自訂）
+glass_dark = "default"
+glass_light = "default"
+minimal_dark = "default"
+minimal_light = "default"
+terminal_dark = "default"
+terminal_light = "default"
+gauge_dark = "default"
+gauge_light = "default"
+neon_dark = "default"
+
+[providers.claude]
+enabled = true                     # 是否查詢與顯示 / Query and show this service
+cli_path = ""                      # CLI 位置；空白＝自動偵測。只能填程式檔路徑，不能加參數
+visible_quotas = ["claude.five_hour", "claude.seven_day"]   # 要顯示的額度 ID
+
+[providers.codex]
+enabled = true
+cli_path = ""
+visible_quotas = ["codex.primary", "codex.secondary"]
+
+[providers.antigravity]
+enabled = true
+cli_path = ""
+visible_quotas = ["antigravity.gemini-5h", "antigravity.gemini-weekly", "antigravity.3p-5h", "antigravity.3p-weekly"]

@@ -1,0 +1,49 @@
+# 這個檔案定義 AI Usage Board Rust 核心的套件資訊、依賴與發布建置選項。
+[package]
+name = "ai-usage-board"
+version = "1.0.0"
+description = "整合顯示三家 AI 訂閱用量的 Windows 桌面小工具"
+authors = ["AI Usage Board contributors"]
+edition = "2021"
+
+[lib]
+name = "ai_usage_board_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+chrono = { version = "0.4", default-features = false, features = ["clock"] }
+log = { version = "0.4", features = ["std"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+# tray-icon：Windows 右下角通知區的系統匣圖示與右鍵選單（M-010，tray.rs）；只在 Rust 端使用，畫面端沒有權限
+tauri = { version = "2", features = ["tray-icon"] }
+tauri-plugin-dialog = "2"
+tauri-plugin-autostart = "2"
+# 用系統預設瀏覽器開關於頁連結；只在 Rust 端呼叫，不註冊給畫面使用
+tauri-plugin-opener = "2"
+# 只允許一個執行個體：再開一次時讓現有的小工具閃一下
+tauri-plugin-single-instance = "2"
+toml = "0.9"
+toml_edit = "0.25"
+which = "8.0.6"
+
+[lints.rust]
+# MSVC 連結器產生 DLL 時會印出「正在建立程式庫…」的一般訊息，新版 Rust 會把它顯示成警告；這不是程式問題，所以關閉這一項提示。
+linker_messages = "allow"
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = 3
+panic = "abort"
+strip = true
+
+[target."cfg(windows)".dependencies]
+# Win32_Graphics_Dwm：玻璃主題的 Acrylic 材質與視窗圓角；Win32_Globalization：Windows 顯示語言與地區（FR-17）；
+# Win32_UI_Accessibility：監聽「前景視窗換了」的事件通知（SetWinEventHook），Win+D 時小工具浮上來（S-001）
+windows = { version = "0.61", features = ["Win32_Foundation", "Win32_Globalization", "Win32_Graphics_Dwm", "Win32_Security", "Win32_Storage_FileSystem", "Win32_System_JobObjects", "Win32_System_Threading", "Win32_UI_Accessibility", "Win32_UI_WindowsAndMessaging"] }
+# 讀 Windows 版本號（判斷有沒有 Windows 11 的系統 Acrylic）；Tauri 本身已經在用，不會多下載
+windows-version = "0.1"

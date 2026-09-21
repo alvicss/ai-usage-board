@@ -1,0 +1,246 @@
+/*
+ * 檔案：styles/card.css
+ * 用途：卡片與額度列的共用樣式（43「元件風格」）：標題列、失敗原因、額度列（標籤｜進度條｜百分比＋重置時間）、
+ *       查詢失敗淡化、精簡模式、快用完警示的呼吸外框與該行底色（FR-7；警示色 --w-alert 與外框開關來自 FR-18）。
+ *       卡片邊框一律用 --w-border 上色，外發光（霓虹）用 --w-border-glow；小工具依 FR-18 設定覆寫這兩個變數。
+ *       工程師主題的字元條、儀表主題的環狀表各自的樣式在 themes/terminal.css、themes/gauge.css。
+ * 誰會用到：main.ts 載入；ProviderCard、QuotaRow、TerminalRow、UsageBar。
+ */
+
+/* ---------- 卡片 ---------- */
+.provider-card {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: calc(10px * var(--scale));
+  min-width: 0;
+  height: 100%;
+  min-height: 0;
+  padding: calc(14px * var(--scale)) calc(16px * var(--scale)) calc(12px * var(--scale));
+  overflow: hidden;
+  border: 1px solid var(--w-border);
+  border-radius: var(--w-radius);
+  background: var(--w-bg);
+  box-shadow: var(--w-shadow);
+  backdrop-filter: var(--w-backdrop);
+}
+
+.card-top {
+  min-width: 0;
+}
+
+.card-head {
+  display: flex;
+  align-items: center;
+  gap: calc(8px * var(--scale));
+  min-width: 0;
+  min-height: calc(24px * var(--scale));
+}
+
+/* 右上角按鈕落在這張卡片的標題列時，右側留位置 */
+.card-head.reserve-toolbar {
+  padding-right: calc(88px * var(--scale));
+}
+
+.provider-dot {
+  flex: none;
+  width: calc(8px * var(--scale));
+  height: calc(8px * var(--scale));
+  border-radius: 50%;
+  background: var(--codex-dot);
+}
+
+/* 服務代表色（43「服務代表色」）；Codex 用主題的主要文字色 */
+.provider-dot.claude {
+  background: #d4a27f;
+}
+
+.provider-dot.antigravity {
+  background: #5b8def;
+}
+
+.provider-name {
+  overflow: hidden;
+  /* 霓虹主題的服務名稱用 Orbitron（--w-name-font），其他主題沿用卡片字型 */
+  font-family: var(--w-name-font, var(--w-font));
+  font-size: calc(15px * var(--scale));
+  font-weight: 600;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.plan-badge {
+  flex: none;
+  padding: 1px calc(7px * var(--scale));
+  border: 1px solid var(--w-line);
+  border-radius: 99px;
+  color: var(--w-muted);
+  font-size: calc(10.5px * var(--scale));
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* 查詢失敗的原因（琥珀色，刻意不用紅色） */
+.status-reason {
+  margin: calc(2px * var(--scale)) 0 0;
+  overflow: hidden;
+  color: var(--w-reason);
+  font-size: calc(11.5px * var(--scale));
+  line-height: 1.35;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* 卡片中央的訊息：查詢中、從未成功的原因＋解決方法、沒有勾選的額度 */
+.card-message {
+  align-self: center;
+  padding-inline: calc(6px * var(--scale));
+  color: var(--w-muted);
+  font-size: calc(12px * var(--scale));
+  line-height: 1.5;
+  text-align: center;
+}
+
+.card-message.problem {
+  color: var(--w-reason);
+}
+
+.card-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: calc(12px * var(--scale));
+  color: var(--w-muted);
+  font-size: calc(11px * var(--scale));
+}
+
+/* ---------- 額度列：標籤｜進度條｜百分比，下一行重置時間 ---------- */
+.quota-list {
+  display: grid;
+  grid-template-columns: minmax(0, max-content) minmax(0, 1fr) auto;
+  align-content: start;
+  column-gap: calc(10px * var(--scale));
+  row-gap: calc(6px * var(--scale));
+  min-height: 0;
+  /* 視窗縮到非常小、連精簡模式都放不下時，多出的行裁掉，不要壓到頁尾；
+     左右各多留 6px，警示行的底色（往外延伸 6px）才不會被裁掉 */
+  margin-inline: calc(-6px * var(--scale));
+  padding-inline: calc(6px * var(--scale));
+  overflow: hidden;
+}
+
+/* 每一行共用上層的欄寬（subgrid），同一張卡片的進度條才會對齊 */
+.quota-row {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+  align-items: center;
+  margin-inline: calc(-6px * var(--scale));
+  padding: calc(3px * var(--scale)) calc(6px * var(--scale));
+  border-radius: 6px;
+}
+
+.quota-label {
+  max-width: 9.6em;
+  overflow: hidden;
+  font-size: calc(12px * var(--scale));
+  font-weight: 500;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.usage-track {
+  height: calc(var(--bar-h) * var(--scale));
+  min-height: 2px;
+  overflow: hidden;
+  border-radius: var(--bar-radius);
+  background: var(--w-track);
+}
+
+.usage-fill {
+  height: 100%;
+  border-radius: inherit;
+  /* 寬度變化 600ms 過渡（43「動畫」） */
+  transition:
+    width 600ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    background-color 600ms;
+}
+
+/* 顯示 0% 時完全不畫填色（連圓頭與柔光都不畫），數字和進度條一致 */
+.usage-fill.empty {
+  visibility: hidden;
+}
+
+.quota-percent {
+  min-width: 3.1ch;
+  font-family: var(--w-num-font);
+  font-size: calc(var(--w-num-size) * var(--scale));
+  font-weight: var(--w-num-weight);
+  line-height: 1.1;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.quota-percent small {
+  margin-left: 1px;
+  font-size: 0.55em;
+}
+
+.reset-time {
+  grid-column: 1 / -1;
+  color: var(--w-muted);
+  font-size: calc(11px * var(--scale));
+  line-height: 1.35;
+}
+
+/* 查詢失敗：數字與進度條去飽和、透明度 55% */
+.provider-card.failed .quota-list {
+  opacity: 0.55;
+  filter: saturate(0);
+}
+
+/* 精簡模式：隱藏重置時間那一行（改用滑鼠停留提示），行距縮小 */
+.provider-card.compact {
+  gap: calc(6px * var(--scale));
+  padding-block: calc(10px * var(--scale)) calc(8px * var(--scale));
+}
+
+.provider-card.compact .quota-list {
+  row-gap: calc(2px * var(--scale));
+}
+
+.provider-card.compact .quota-row {
+  padding-block: calc(1px * var(--scale));
+}
+
+/* ---------- 快用完警示（FR-7）：卡片外框與該行呼吸泛紅，3 秒一個週期 ---------- */
+.provider-card.alert::after {
+  position: absolute;
+  z-index: 3;
+  inset: 0;
+  border: 1.5px solid var(--w-alert);
+  border-radius: inherit;
+  box-shadow:
+    inset 0 0 calc(14px * var(--scale)) color-mix(in srgb, var(--w-alert) 35%, transparent),
+    0 0 calc(16px * var(--scale)) color-mix(in srgb, var(--w-alert) 55%, transparent);
+  content: "";
+  pointer-events: none;
+  animation: alert-breathe 3s ease-in-out infinite;
+}
+
+/* 亮色：外框加粗到 2px，呼吸的透明度下限提高到 0.5（43「色系」） */
+[data-scheme="light"] .provider-card.alert::after {
+  border-width: 2px;
+  animation-name: alert-breathe-light;
+}
+
+/* 警示外框關閉時（FR-18），只剩該行底色變化 */
+[data-alert-frame="off"] .provider-card.alert::after {
+  display: none;
+}
+
+.quota-row.alert {
+  animation: row-breathe 3s ease-in-out infinite;
+}

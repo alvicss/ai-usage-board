@@ -1,0 +1,12 @@
+{
+  // 這個檔案提供 Vite 設定檔所需的 Node.js TypeScript 編譯規則。
+  "compilerOptions": {
+    "composite": true,
+    "skipLibCheck": true,
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "strict": true
+  },
+  "include": ["vite.config.ts"]
+}

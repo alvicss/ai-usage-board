@@ -1,0 +1,46 @@
+/*
+ * 檔案：themes/minimal.css
+ * 用途：簡約主題（43「minimal 簡約」）：乾淨的紙面感、細線條、大數字。亮色與暗色兩組變數，
+ *       用 [data-theme="minimal"][data-scheme="dark|light"] 選擇器定義（43「色系」的實作結構）。
+ *       色碼與畫面示意 docs/design/ui-mockup.html 的 .t-minimal 一致。
+ * 誰會用到：WidgetView 的根元素（data-theme="minimal"）；設定視窗也沿用這組配色。
+ */
+
+/* 兩版共用：圓角 10px、無陰影、只有 1px 線條、進度條 3px 直角、百分比 26px 粗體 */
+[data-theme="minimal"] {
+  --w-radius: 10px;
+  --w-shadow: none;
+  --w-backdrop: none;
+  --w-border-glow: none;
+  --w-font: "Segoe UI Variable Text", "Segoe UI", "Microsoft JhengHei UI", sans-serif;
+  --w-num-font: "Segoe UI Variable Display", "Segoe UI", "Microsoft JhengHei UI", sans-serif;
+  --w-num-weight: 600;
+  --w-num-size: 26px;
+  --bar-h: 3px;
+  --bar-radius: 0;
+  --w-hover: rgba(127, 127, 127, 0.14);
+}
+
+/* 暗色 */
+[data-theme="minimal"][data-scheme="dark"] {
+  --w-bg: #16191d;
+  --w-border: #2a2f36;
+  --w-line: #2a2f36;
+  --w-ink: #eceff3;
+  --w-muted: #8c95a1;
+  --w-track: #262b31;
+  --w-reason: #e0a43a;
+  --codex-dot: #eceff3;
+}
+
+/* 亮色 */
+[data-theme="minimal"][data-scheme="light"] {
+  --w-bg: #f5f7fa;
+  --w-border: #e1e5ea;
+  --w-line: #e1e5ea;
+  --w-ink: #15191e;
+  --w-muted: #6b7480;
+  --w-track: #e6eaef;
+  --w-reason: #b7791f;
+  --codex-dot: #15191e;
+}

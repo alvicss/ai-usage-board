@@ -1,0 +1,29 @@
+# 這個檔案排除 Node、Rust 與本機編輯器產生的建置或暫存內容。
+node_modules/
+dist/
+src-tauri/target/
+# 發布用的 exe 與 Release 說明檔（上傳到 GitHub Releases，不進版控，見 docs/80_DEPLOYMENT.md）
+release/
+*.log
+*.local
+
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# 官方骨架只在 M-001 建立期間暫存，不進入版本控制。
+.m001-scaffold/
+
+# 內部開發交接資料只留在私有版，不納入公開原始碼 repo。
+docs/
+CLAUDE.md
+AGENTS.md
+.agents/
+tools/
+_public-release/

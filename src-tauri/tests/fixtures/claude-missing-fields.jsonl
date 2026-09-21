@@ -1,0 +1,2 @@
+{"description":"此檔案為去識別化 CLI 實測資料，只保留用量解析需要的欄位。","type":"fixture_note"}
+{"response":{"request_id":"usage","response":{"behaviors":null,"rate_limits_available":true,"session":{"model_usage":{},"total_api_duration_ms":0,"total_cost_usd":0,"total_duration_ms":1711,"total_lines_added":0,"total_lines_removed":0},"subscription_type":"max"},"subtype":"success"},"type":"control_response"}

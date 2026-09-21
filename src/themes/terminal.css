@@ -1,0 +1,134 @@
+/*
+ * 檔案：themes/terminal.css
+ * 用途：工程師主題（43「terminal 工程師」）：精緻版的 status line。
+ *       暗色是黑底終端機、亮色是「紙本終端機」；色碼與畫面示意 .t-terminal 一致。
+ *       - 全部文字用等寬字 JetBrains Mono（以 OFL 授權內嵌，main.ts 載入），後備 Cascadia Mono、Consolas；
+ *       - 標題列上方一行提示字元「~/ai-usage $ usage <服務>」（不放閃爍游標）；
+ *       - 額度一行像終端機輸出：「! 標籤  ████░░░░  62%  ↻ 2h13m」，字元條元件是 CharBar.vue；
+ *       - 超過警示門檻：行首「!」用警示色閃爍（不泛紅底色），卡片外框照樣呼吸；
+ *       - 整張卡片疊一層掃描線。
+ * 誰會用到：WidgetView 的根元素（data-theme="terminal"）、設定頁預覽；ProviderCard、TerminalRow、CharBar。
+ */
+
+[data-theme="terminal"] {
+  --w-radius: 6px;
+  --w-shadow: none;
+  --w-backdrop: none;
+  --w-border-glow: none;
+  --w-font: "JetBrains Mono", "Cascadia Mono", Consolas, "Microsoft JhengHei UI", monospace;
+  --w-num-font: "JetBrains Mono", "Cascadia Mono", Consolas, monospace;
+  --w-num-weight: 500;
+  --w-num-size: 14px;
+}
+
+[data-theme="terminal"][data-scheme="dark"] {
+  --w-bg: #0c0f0a;
+  --w-border: #1f2a1c;
+  --w-line: #1f2a1c;
+  --w-ink: #cfefcb;
+  --w-muted: #6f8a6b;
+  --w-track: #2b3328;
+  --w-empty: #2b3328;
+  --w-hover: rgba(207, 239, 203, 0.1);
+  --w-reason: #e0a43a;
+  --w-scanline: rgba(255, 255, 255, 0.04);
+  --codex-dot: #cfefcb;
+}
+
+[data-theme="terminal"][data-scheme="light"] {
+  --w-bg: #f3f5ee;
+  --w-border: #d5dccb;
+  --w-line: #d5dccb;
+  --w-ink: #1f3a1d;
+  --w-muted: #6b7a62;
+  --w-track: #d3dac8;
+  --w-empty: #d3dac8;
+  --w-hover: rgba(31, 58, 29, 0.08);
+  --w-reason: #b7791f;
+  --w-scanline: rgba(0, 0, 0, 0.035);
+  --codex-dot: #1f3a1d;
+}
+
+/* 掃描線：蓋在整張卡片上（不擋滑鼠），1px 線、3px 一條 */
+[data-theme="terminal"] .provider-card::before {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  background: repeating-linear-gradient(0deg, var(--w-scanline) 0 1px, transparent 1px 3px);
+  content: "";
+  pointer-events: none;
+}
+
+/* 標題列上方的提示字元 */
+.terminal-prompt {
+  margin-bottom: calc(1px * var(--scale));
+  overflow: hidden;
+  color: var(--w-muted);
+  font-size: calc(11px * var(--scale));
+  line-height: 1.35;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.terminal-prompt.reserve-toolbar {
+  padding-right: calc(88px * var(--scale));
+}
+
+/* 額度列：標籤｜字元條｜百分比｜重置時間（最右邊，放不下時省略） */
+.terminal-list {
+  grid-template-columns: minmax(0, max-content) auto auto minmax(0, 1fr);
+  column-gap: calc(8px * var(--scale));
+  row-gap: calc(4px * var(--scale));
+}
+
+.terminal-row {
+  font-size: calc(12.5px * var(--scale));
+}
+
+/* 標籤優先完整顯示（字元條格數已依標籤寬度算好），不套用其他主題的最大寬度 */
+.terminal-row .quota-label {
+  max-width: none;
+  font-size: calc(12.5px * var(--scale));
+}
+
+/* 百分比與重置時間靠右對齊，數字寬度固定 */
+.terminal-row .quota-percent {
+  line-height: 1.2;
+}
+
+.terminal-row .reset-time {
+  grid-column: auto;
+  overflow: hidden;
+  font-size: calc(11.5px * var(--scale));
+  text-align: right;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* 字元條：不換行、字距略收，看起來是一條連續的條 */
+.char-bar {
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+}
+
+.char-empty {
+  color: var(--w-empty);
+}
+
+/* 行首的「!」：平常佔位但看不見；超過門檻時用警示色閃爍（FR-18：工程師主題的 ! 也用警示色） */
+.terminal-bang {
+  margin-right: 0.3em;
+  color: var(--w-alert);
+  font-weight: 700;
+  visibility: hidden;
+}
+
+.terminal-row.alert .terminal-bang {
+  visibility: visible;
+  animation: terminal-blink 1s steps(1) infinite;
+}
+
+/* 工程師主題的警示由「!」表現，該行不再泛紅底色 */
+.terminal-row.alert {
+  animation: none;
+}

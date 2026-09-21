@@ -1,0 +1,68 @@
+/*
+ * 檔案：themes/glass.css
+ * 用途：玻璃主題（43「glass 玻璃」「玻璃材質」）的亮暗兩組變數；色碼與畫面示意 .t-glass 一致。
+ *       依環境分兩種樣子（小工具根元素的 data-material 決定）：
+ *       1. Windows 11 有 Acrylic：視窗本身就是毛玻璃（Rust desktop.rs 套材質、視窗四角圓角），
+ *          卡片貼齊視窗邊緣、圓角同 Windows 視窗圓角（8px），卡片再疊一層淡淡的白。
+ *       2. 沒有 Acrylic（Windows 10、Windows 11 21H2）：卡片改成半透明底（43 的退回色）。
+ *       backdrop-filter 在真的小工具裡後面是透明的、看不出效果；在設定頁預覽與瀏覽器預覽的示意桌布上才看得到。
+ * 誰會用到：WidgetView 的根元素（data-theme="glass"，預設主題）、設定頁預覽。
+ */
+
+[data-theme="glass"] {
+  --w-radius: 16px;
+  --w-backdrop: blur(22px) saturate(140%);
+  --w-border-glow: none;
+  --w-font: "Segoe UI Variable Text", "Segoe UI", "Microsoft JhengHei UI", sans-serif;
+  --w-num-font: "Segoe UI Variable Display", "Segoe UI", "Microsoft JhengHei UI", sans-serif;
+  --w-num-weight: 300;
+  --w-num-size: 20px;
+  --bar-h: 6px;
+  --bar-radius: 99px;
+}
+
+[data-theme="glass"][data-scheme="dark"] {
+  --w-bg: rgba(255, 255, 255, 0.1);
+  --w-border: rgba(255, 255, 255, 0.18);
+  --w-line: rgba(255, 255, 255, 0.18);
+  --w-ink: rgba(255, 255, 255, 0.94);
+  --w-muted: rgba(255, 255, 255, 0.62);
+  --w-track: rgba(255, 255, 255, 0.14);
+  --w-hover: rgba(255, 255, 255, 0.12);
+  --w-reason: #e0a43a;
+  --w-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 12px 32px rgba(0, 0, 0, 0.25);
+  --codex-dot: rgba(255, 255, 255, 0.94);
+}
+
+[data-theme="glass"][data-scheme="light"] {
+  --w-bg: rgba(255, 255, 255, 0.58);
+  --w-border: rgba(255, 255, 255, 0.7);
+  --w-line: rgba(20, 24, 31, 0.16);
+  --w-ink: rgba(20, 24, 31, 0.92);
+  --w-muted: rgba(20, 24, 31, 0.58);
+  --w-track: rgba(20, 24, 31, 0.12);
+  --w-hover: rgba(20, 24, 31, 0.08);
+  --w-reason: #b7791f;
+  --w-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 12px 32px rgba(15, 25, 45, 0.18);
+  --codex-dot: rgba(20, 24, 31, 0.92);
+}
+
+/* 1. Windows 11 Acrylic：卡片貼齊視窗（不留透明邊），圓角與 Windows 的視窗圓角一致 */
+[data-theme="glass"][data-material="acrylic"] {
+  --shell-pad: 0px;
+  --w-radius: 8px;
+}
+
+/* 2. 沒有 Acrylic：半透明底（43「玻璃材質」的 Windows 10 退回色） */
+[data-theme="glass"][data-material="none"][data-scheme="dark"] {
+  --w-bg: rgba(20, 24, 30, 0.72);
+}
+
+[data-theme="glass"][data-material="none"][data-scheme="light"] {
+  --w-bg: rgba(245, 247, 250, 0.82);
+}
+
+/* 進度條填色帶同色柔光 */
+[data-theme="glass"] .usage-fill {
+  box-shadow: 0 0 10px color-mix(in srgb, var(--fill-color) 50%, transparent);
+}
