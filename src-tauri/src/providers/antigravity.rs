@@ -115,13 +115,7 @@ pub fn parse_response(content: &str) -> ProviderResult<ProviderUsage> {
                 Some(10_080) => "quota.weekly",
                 _ => "quota.unknown_window",
             };
-            let label_param = if bucket_id.starts_with("gemini") {
-                "Gemini".to_string()
-            } else if bucket_id.starts_with("3p") {
-                "Claude+GPT".to_string()
-            } else {
-                group_name.to_string()
-            };
+            let label_param = label_name(bucket_id, group_name);
 
             let quota = Quota {
                 id: format!("antigravity.{bucket_id}"),
@@ -163,6 +157,29 @@ pub fn parse_response(content: &str) -> ProviderResult<ProviderUsage> {
         last_success_at: None,
         quotas,
     })
+}
+
+/// 額度標籤前面要放的名稱（label_param），例如「Gemini 5 小時」的 Gemini。
+/// 認得的 bucket 用簡短名稱；不認得的（agy 日後新增的群組）用 agy 回報的群組原名，
+/// 不再用「ID 開頭是 gemini 就叫 Gemini」的寬鬆規則，避免新群組被誤標成 Gemini、和原本的額度撞名。
+fn label_name(bucket_id: &str, group_name: &str) -> String {
+    // 「Gemini 4 Argon」群組（agy 2026-10 新增，只有每週額度）：ID 是 gemini-argon-wtu-weekly，
+    // 也是 gemini 開頭，所以要比 Gemini 先判斷；只比對 gemini-argon 前綴，後面的 wtu 之類的字可能會變
+    if bucket_id.starts_with("gemini-argon") {
+        return "Argon".to_string();
+    }
+
+    // 「Gemini Models」群組（Gemini Flash、Gemini Pro）
+    if bucket_id == "gemini-5h" || bucket_id == "gemini-weekly" {
+        return "Gemini".to_string();
+    }
+
+    // 「Claude and GPT models」群組（第三方模型 third-party，ID 是 3p-5h、3p-weekly）
+    if bucket_id.starts_with("3p-") {
+        return "Claude+GPT".to_string();
+    }
+
+    group_name.to_string()
 }
 
 /// groups 裡有沒有任何一個 bucket（額度）。groups 是空陣列、或每個群組的 buckets 都是空的，就是沒有。
@@ -336,6 +353,75 @@ mod tests {
             .quotas
             .iter()
             .all(|quota| { quota.used_percent >= 0.0 && quota.used_percent <= 100.0 }));
+    }
+
+    #[test]
+    fn argon_group_gets_its_own_label_and_comes_last() {
+        // 2026-10-19 實測：agy 多了第三個群組「Gemini 4 Argon」，只有每週額度，ID 也是 gemini 開頭
+        let content = include_str!("../../tests/fixtures/antigravity-argon.json");
+        let usage = parse_response(content).expect("含 Argon 的 fixture 應可解析");
+
+        let ids: Vec<&str> = usage.quotas.iter().map(|quota| quota.id.as_str()).collect();
+        assert_eq!(
+            ids,
+            vec![
+                "antigravity.gemini-5h",
+                "antigravity.gemini-weekly",
+                "antigravity.3p-5h",
+                "antigravity.3p-weekly",
+                "antigravity.gemini-argon-wtu-weekly"
+            ]
+        );
+
+        // 標籤名稱：Argon 不能被誤標成 Gemini（舊規則會讓它和 Gemini 每週撞名）
+        let names: Vec<Option<&str>> = usage
+            .quotas
+            .iter()
+            .map(|quota| quota.label_param.as_deref())
+            .collect();
+        assert_eq!(
+            names,
+            vec![
+                Some("Gemini"),
+                Some("Gemini"),
+                Some("Claude+GPT"),
+                Some("Claude+GPT"),
+                Some("Argon")
+            ]
+        );
+
+        let argon = usage.quotas.last().expect("應有 Argon 額度");
+        assert_eq!(argon.label_key, "quota.weekly");
+        assert_eq!(argon.window_minutes, Some(10_080));
+        // 實測 remaining_fraction ≈ 0.9439 → 已用約 5.6%
+        assert!((argon.used_percent - 5.605).abs() < 0.01);
+    }
+
+    #[test]
+    fn unknown_group_uses_the_group_name_as_label() {
+        // agy 日後再新增不認得的群組：用 agy 回報的群組原名，不套用 Gemini 等簡短名稱
+        let content = modified_fixture(|root| {
+            let new_group = serde_json::json!({
+                "name": "Gemini Nova Models",
+                "buckets": [{
+                    "id": "gemini-nova-weekly",
+                    "window": "weekly",
+                    "remaining_fraction": 0.5,
+                    "reset_time": "2026-09-25T13:41:58Z"
+                }]
+            });
+            root["command"]["data"]["groups"]
+                .as_array_mut()
+                .expect("groups")
+                .push(new_group);
+        });
+        let usage = parse_response(&content).expect("新群組不能讓解析失敗");
+        let nova = usage
+            .quotas
+            .iter()
+            .find(|quota| quota.id == "antigravity.gemini-nova-weekly")
+            .expect("應有新群組的額度");
+        assert_eq!(nova.label_param.as_deref(), Some("Gemini Nova Models"));
     }
 
     #[test]

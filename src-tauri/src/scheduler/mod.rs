@@ -194,10 +194,10 @@ impl Scheduler {
         merge_outcomes(&mut snapshot, &outcomes, &settings, finished_at);
         snapshot.updated_at = Some(finished_at);
 
-        // state.json：保險絲與看過的額度
+        // state.json：保險絲
         {
             let mut state = lock(&self.inner.runtime_state);
-            let newly_tripped = update_runtime_state(&mut state, &outcomes, &snapshot, finished_at);
+            let newly_tripped = update_runtime_state(&mut state, &outcomes, finished_at);
             if newly_tripped {
                 log::warn!(
                     "Antigravity 保險絲跳脫（num_turns={:?}），已停止查詢 Antigravity；請到設定畫面確認後手動恢復",

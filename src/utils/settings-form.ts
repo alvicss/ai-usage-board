@@ -4,8 +4,7 @@
 //       2. 「還原預設」用的預設值（與 src-tauri/config/default-settings.toml 一致，單元測試會比對）。
 //       3. 卡片邊框（FR-18）：目前主題＋色系對應哪個欄位、目前是哪種模式、怎麼組回設定值。
 //       4. 欄位錯誤：從 Rust 回傳的警告清單找出某欄位的警告。
-//       5. 額度清單：哪些額度是新出現的（設定頁標「新」，FR-12）。
-//       6. 整數輸入的解析。
+//       5. 整數輸入的解析。
 // 誰會用到：設定視窗的元件（SettingsView 與 components/settings/ 底下各頁）。
 
 import type { CardBorderSettings, ColorScheme, ColorSettings, SettingsWarning, ThemeId } from "../types/settings";
@@ -81,11 +80,6 @@ export function warningFor(field: string, warnings: SettingsWarning[]): Settings
     }
   }
   return undefined;
-}
-
-/** 這個額度是不是「新出現的」：還沒被記錄為看過（看過的清單由 Rust 的 state.json 保管） */
-export function isNewQuota(quotaId: string, seenQuotaIds: string[]): boolean {
-  return !seenQuotaIds.includes(quotaId);
 }
 
 /**

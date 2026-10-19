@@ -1,7 +1,8 @@
 //! 檔案：runtime_state.rs
-//! 用途：讀寫 state.json（41「狀態檔」）：Antigravity 保險絲、兩種模式各自的視窗位置大小、看過的額度 ID。
+//! 用途：讀寫 state.json（41「狀態檔」）：Antigravity 保險絲、兩種模式各自的視窗位置大小。
 //!       保險絲狀態重開程式後仍保留，使用者在設定畫面確認後才重設。
-//! 誰會用到：lib.rs（啟動時讀取）、scheduler（保管內容：保險絲、看過的額度、視窗位置；widget_window.rs 透過它恢復與記住視窗位置）。
+//!       舊版 state.json 裡的 seen_quota_ids（設定頁「新」標籤用，M-012 已拿掉）讀取時直接忽略，下次寫檔就消失。
+//! 誰會用到：lib.rs（啟動時讀取）、scheduler（保管內容：保險絲、視窗位置；widget_window.rs 透過它恢復與記住視窗位置）。
 
 use crate::atomic_file;
 use serde::{Deserialize, Serialize};
@@ -16,8 +17,6 @@ pub struct RuntimeState {
     pub window: WindowState,
     #[serde(default)]
     pub antigravity_fuse: AntigravityFuse,
-    #[serde(default)]
-    pub seen_quota_ids: Vec<String>,
 }
 
 /// 視窗位置與大小：輪播、並排兩種模式各自記住（M-005）。
@@ -54,7 +53,6 @@ impl Default for RuntimeState {
             schema_version: 1,
             window: WindowState::default(),
             antigravity_fuse: AntigravityFuse::default(),
-            seen_quota_ids: Vec::new(),
         }
     }
 }
@@ -102,5 +100,19 @@ mod tests {
         assert!(loaded.antigravity_fuse.tripped);
         assert_eq!(loaded.antigravity_fuse.num_turns, Some(1.0));
         std::fs::remove_dir_all(directory).expect("應清除測試資料");
+    }
+
+    #[test]
+    fn old_state_file_with_seen_quota_ids_still_loads() {
+        // v1.0 的 state.json 多了 seen_quota_ids（「新」標籤用，M-012 已拿掉）：
+        // 不認得的欄位要直接忽略，不能因此把保險絲狀態重設成預設值
+        let old_text = r#"{
+            "schema_version": 1,
+            "antigravity_fuse": { "tripped": true, "tripped_at": 999, "num_turns": 1.0 },
+            "seen_quota_ids": ["claude.five_hour", "antigravity.gemini-5h"]
+        }"#;
+        let loaded: RuntimeState = serde_json::from_str(old_text).expect("舊版 state.json 應可讀取");
+        assert!(loaded.antigravity_fuse.tripped);
+        assert_eq!(loaded.antigravity_fuse.tripped_at, Some(999));
     }
 }

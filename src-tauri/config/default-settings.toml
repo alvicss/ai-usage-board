@@ -58,4 +58,4 @@ visible_quotas = ["codex.primary", "codex.secondary"]
 [providers.antigravity]
 enabled = true
 cli_path = ""
-visible_quotas = ["antigravity.gemini-5h", "antigravity.gemini-weekly", "antigravity.3p-5h", "antigravity.3p-weekly"]
+visible_quotas = ["antigravity.gemini-5h", "antigravity.gemini-weekly", "antigravity.3p-5h", "antigravity.3p-weekly", "antigravity.gemini-argon-wtu-weekly"]

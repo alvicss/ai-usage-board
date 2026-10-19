@@ -1,7 +1,7 @@
 # 這個檔案定義 AI Usage Board Rust 核心的套件資訊、依賴與發布建置選項。
 [package]
 name = "ai-usage-board"
-version = "1.0.0"
+version = "1.1.0"
 description = "整合顯示三家 AI 訂閱用量的 Windows 桌面小工具"
 authors = ["AI Usage Board contributors"]
 edition = "2021"

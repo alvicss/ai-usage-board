@@ -1,7 +1,7 @@
 /*
  * 檔案：styles/settings-pages.css
  * 用途：設定視窗各頁專屬的樣式：外觀頁的即時預覽（示意桌布分白天／夜晚）與主題縮圖、卡片邊框編輯區，
- *       服務頁的服務區塊、額度勾選、「新」標記、保險絲提示，關於頁。
+ *       服務頁的服務區塊、額度勾選、保險絲提示，關於頁。
  *       共用的版面與欄位樣式在 styles/settings.css。
  * 誰會用到：main.ts 載入；components/settings/ 底下的 AppearancePage、WidgetPreview、BorderSettings、
  *           ProviderSection、AboutPage。
@@ -165,14 +165,6 @@
   flex-wrap: wrap;
   gap: 6px 16px;
   font-size: 13px;
-}
-
-.badge-new {
-  padding: 0 6px;
-  border-radius: 99px;
-  background: var(--s-new);
-  color: #ffffff;
-  font-size: 10.5px;
 }
 
 /* Antigravity 保險絲跳脫的提示（琥珀色虛線框，與畫面示意相同） */

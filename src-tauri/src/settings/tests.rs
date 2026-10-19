@@ -38,8 +38,8 @@ fn bundled_defaults_match_the_data_model() {
     assert_eq!(defaults.borders.card.neon_dark, "default");
     assert_eq!(
         defaults.providers.antigravity.visible_quotas.len(),
-        4,
-        "Antigravity 預設顯示四個額度"
+        5,
+        "Antigravity 預設顯示五個額度（Gemini、Claude+GPT 各兩個，加上 Argon 每週）"
     );
 }
 

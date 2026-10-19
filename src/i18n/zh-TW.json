@@ -167,7 +167,6 @@
       "use_auto": "改回自動偵測",
       "dialog_filter": "CLI 程式（.exe、.cmd）",
       "quotas": "要顯示的額度",
-      "quota_new": "新",
       "no_quotas": "還沒查到這一家的額度；查詢成功後會列在這裡。",
       "fuse_turns": "偵測到 agy 的回應有 {turns} 次模型對話（{time}），為了避免消耗額度，已暫停查詢 Antigravity。",
       "fuse_unknown": "偵測到 agy 的回應無法確認是零消耗（{time}），為了避免消耗額度，已暫停查詢 Antigravity。",

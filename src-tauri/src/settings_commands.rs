@@ -74,18 +74,15 @@ fn apply_saved_settings(
         scheduler.request_refresh(app.clone(), "服務設定變更");
     }
 
-    // 6. 設定頁列出的額度使用者都看過了：「新」標記到此為止
-    scheduler.mark_all_quotas_seen();
-
-    // 7. 小工具視窗的亮暗與玻璃材質跟著新的主題、色系（43「玻璃材質」）
+    // 6. 小工具視窗的亮暗與玻璃材質跟著新的主題、色系（43「玻璃材質」）
     widget_window::apply_appearance(app, saved);
 
-    // 8. 語言改了：系統匣選單換成新語言（小工具右鍵選單由畫面收到 settings-changed 後自己重建）
+    // 7. 語言改了：系統匣選單換成新語言（小工具右鍵選單由畫面收到 settings-changed 後自己重建）
     if changes.language {
         tray::apply_language(app, &saved.general.language);
     }
 
-    // 9. 設定視窗標題列的亮暗跟著新色系；語言、主題、邊框等由畫面收到 settings-changed 後自己套用
+    // 8. 設定視窗標題列的亮暗跟著新色系；語言、主題、邊框等由畫面收到 settings-changed 後自己套用
     settings_window::apply_theme(app, &saved.display.color_scheme);
     let _ = app.emit("settings-changed", saved.clone());
 }
@@ -98,7 +95,7 @@ pub fn detect_cli(provider: ProviderId) -> Option<String> {
     Some(path.to_string_lossy().into_owned())
 }
 
-/// 設定頁需要的狀態：Antigravity 保險絲、看過的額度（標「新」用）。
+/// 設定頁需要的狀態：Antigravity 保險絲。
 #[tauri::command]
 pub fn get_runtime_state(scheduler: State<'_, Scheduler>) -> RuntimeSummary {
     scheduler.runtime_summary()

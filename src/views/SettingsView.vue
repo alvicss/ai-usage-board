@@ -172,8 +172,6 @@ async function save() {
     loadWarnings.value = [];
     liveWarnings.value = [];
     showStatus(t("settings.saved"), false);
-    // 儲存後「新」額度標記會清掉，重新讀一次
-    runtime.value = await getRuntimeState();
   } catch (reason) {
     const failure = reason as Partial<SaveSettingsError>;
     if (Array.isArray(failure.warnings) && failure.warnings.length > 0) {

@@ -2,7 +2,7 @@
   "description": "AI Usage Board 前端與桌面應用程式的建置設定。",
   "name": "ai-usage-board",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.1.0",
   "type": "module",
   "scripts": {
     "dev": "vite",

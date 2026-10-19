@@ -167,7 +167,6 @@
       "use_auto": "Detect automatically",
       "dialog_filter": "CLI program (.exe, .cmd)",
       "quotas": "Quotas to show",
-      "quota_new": "New",
       "no_quotas": "No quotas yet. They will be listed here after a successful query.",
       "fuse_turns": "agy reported {turns} model turn(s) ({time}). Antigravity queries are paused so no quota is used.",
       "fuse_unknown": "The agy response could not be confirmed as zero usage ({time}). Antigravity queries are paused so no quota is used.",

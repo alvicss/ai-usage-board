@@ -1,6 +1,5 @@
 //! 檔案：scheduler/tests.rs
-//! 用途：scheduler/rules.rs 的單元測試：更新間隔、重置時間補查、略過停用與保險絲、合併結果、保險絲紀錄、
-//!       看過的額度（設定頁標「新」）。
+//! 用途：scheduler/rules.rs 的單元測試：更新間隔、重置時間補查、略過停用與保險絲、合併結果、保險絲紀錄。
 //! 誰會用到：`cargo test`；時間都由參數傳入，不需要真的等待，也不執行任何 CLI。
 
 use super::rules::*;
@@ -134,8 +133,6 @@ fn failed_provider_keeps_old_quotas_and_others_update() {
 
 #[test]
 fn fuse_trip_is_recorded_once_with_num_turns() {
-    let settings = default_settings().expect("預設設定應有效");
-    let snapshot = empty_snapshot(&settings);
     let mut state = RuntimeState::default();
     let tripped = ProviderOutcome {
         id: ProviderId::Antigravity,
@@ -147,49 +144,14 @@ fn fuse_trip_is_recorded_once_with_num_turns() {
 
     let outcomes = vec![tripped];
 
-    let newly = update_runtime_state(&mut state, &outcomes, &snapshot, 999);
+    let newly = update_runtime_state(&mut state, &outcomes, 999);
     assert!(newly);
     assert!(state.antigravity_fuse.tripped);
     assert_eq!(state.antigravity_fuse.tripped_at, Some(999));
     assert_eq!(state.antigravity_fuse.num_turns, Some(1.0));
 
     // 第二次不應改掉第一次的跳脫時間
-    let again = update_runtime_state(&mut state, &outcomes, &snapshot, 2_000);
+    let again = update_runtime_state(&mut state, &outcomes, 2_000);
     assert!(!again);
     assert_eq!(state.antigravity_fuse.tripped_at, Some(999));
-}
-
-#[test]
-fn first_query_of_each_provider_marks_its_quotas_as_seen() {
-    let settings = default_settings().expect("預設設定應有效");
-    let mut snapshot = empty_snapshot(&settings);
-    snapshot.providers[0].quotas = vec![
-        sample_quota("claude.five_hour", 10.0, None),
-        sample_quota("claude.seven_day", 20.0, None),
-    ];
-    let mut seen = Vec::new();
-
-    record_first_seen_quotas(&mut seen, &snapshot);
-    assert_eq!(seen, vec!["claude.five_hour", "claude.seven_day"]);
-}
-
-#[test]
-fn quotas_that_appear_later_stay_new_until_settings_are_saved() {
-    let settings = default_settings().expect("預設設定應有效");
-    let mut snapshot = empty_snapshot(&settings);
-    snapshot.providers[0].quotas = vec![sample_quota("claude.five_hour", 10.0, None)];
-    let mut seen = Vec::new();
-    record_first_seen_quotas(&mut seen, &snapshot);
-
-    // CLI 之後多回報了一個額度：不自動算看過（設定頁才會標「新」）
-    snapshot.providers[0]
-        .quotas
-        .push(sample_quota("claude.model.fable", 30.0, None));
-    record_first_seen_quotas(&mut seen, &snapshot);
-    assert!(!seen.contains(&"claude.model.fable".to_string()));
-
-    // 使用者在設定頁按儲存後才算看過
-    mark_all_quotas_seen(&mut seen, &snapshot);
-    assert!(seen.contains(&"claude.model.fable".to_string()));
-    assert_eq!(seen.len(), 2, "不重複加入");
 }

@@ -117,6 +117,7 @@ function previewSettings(): Settings {
           "antigravity.gemini-weekly",
           "antigravity.3p-5h",
           "antigravity.3p-weekly",
+          "antigravity.gemini-argon-wtu-weekly",
         ],
       },
     },
@@ -198,6 +199,7 @@ function previewSnapshotAt(now: number): UsageSnapshot {
           { id: "antigravity.gemini-weekly", label_key: "quota.weekly", label_param: "Gemini", used_percent: 39, resets_at: now + 432000, window_minutes: 10080 },
           { id: "antigravity.3p-5h", label_key: "quota.five_hour", label_param: "Claude+GPT", used_percent: 5, resets_at: now + 9600, window_minutes: 300 },
           { id: "antigravity.3p-weekly", label_key: "quota.weekly", label_param: "Claude+GPT", used_percent: 12, resets_at: now + 500000, window_minutes: 10080 },
+          { id: "antigravity.gemini-argon-wtu-weekly", label_key: "quota.weekly", label_param: "Argon", used_percent: 6, resets_at: now + 600000, window_minutes: 10080 },
         ],
       },
     ],
@@ -206,10 +208,10 @@ function previewSnapshotAt(now: number): UsageSnapshot {
 
 /** 預覽用的關於頁資訊 */
 export function previewAppInfo(): AppInfo {
-  return { name: "AI Usage Board", version: "v1.0", license: "MIT" };
+  return { name: "AI Usage Board", version: "v1.1", license: "MIT" };
 }
 
-/** 預覽用的程式狀態：Fable 額度還沒看過（設定頁標「新」）；網址加 ?fuse=1 可預覽保險絲跳脫的提示 */
+/** 預覽用的程式狀態：網址加 ?fuse=1 可預覽保險絲跳脫的提示 */
 export function previewRuntimeSummary(): RuntimeSummary {
   const tripped = urlParameters().get("fuse") === "1";
   return {
@@ -218,16 +220,6 @@ export function previewRuntimeSummary(): RuntimeSummary {
       tripped_at: tripped ? Math.floor(Date.now() / 1000) - 3600 : null,
       num_turns: tripped ? 1 : null,
     },
-    seen_quota_ids: [
-      "claude.five_hour",
-      "claude.seven_day",
-      "codex.primary",
-      "codex.secondary",
-      "antigravity.gemini-5h",
-      "antigravity.gemini-weekly",
-      "antigravity.3p-5h",
-      "antigravity.3p-weekly",
-    ],
   };
 }
 

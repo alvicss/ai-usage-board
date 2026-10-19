@@ -96,7 +96,6 @@ onMounted(async () => {
       :cli-name="provider.cli"
       :provider-draft="draft.providers[provider.id]"
       :quotas="quotasOf(provider.id)"
-      :seen-quota-ids="runtime?.seen_quota_ids ?? []"
       :detected-path="detected[provider.id]"
       :fuse="provider.id === 'antigravity' ? (runtime?.antigravity_fuse ?? null) : null"
       :fuse-message="provider.id === 'antigravity' ? fuseMessage : ''"

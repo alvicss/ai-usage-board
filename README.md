@@ -1,7 +1,7 @@
 # AI Usage Board — 三家 AI 訂閱用量，一個桌面小工具
 
 > 本檔是 AI Usage Board 給人看的第一份文件：它是什麼、怎麼安裝使用、怎麼完全移除、常見問題。
-> **目前狀態**：v1.0 已完成；發布檔請見本專案 GitHub Releases。
+> **目前狀態**：v1.1 已完成；發布檔請見本專案 GitHub Releases。
 
 ## 系統簡介
 
@@ -29,9 +29,9 @@ AI Usage Board 是一個 Windows 桌面小工具，把 **Claude**、**Codex**、
 
 **安裝與啟動**
 
-1. 到本專案 GitHub 的 Releases（https://github.com/alvicss/ai-usage-board/releases ）下載 `AI-Usage-Board-v1.0-portable.exe`（免安裝版），放在任何資料夾都可以。
+1. 到本專案 GitHub 的 Releases（https://github.com/alvicss/ai-usage-board/releases ）下載 `AI-Usage-Board-v1.1-portable.exe`（免安裝版），放在任何資料夾都可以。
 2. 第一次執行時，Windows 可能跳出藍色的「Windows 已保護您的電腦」。這是因為本程式沒有購買數位簽章憑證（免費開源專案），不是病毒警告。請按「**其他資訊**」→「**仍要執行**」。
-   - 想確認檔案沒被竄改：在 PowerShell 執行 `Get-FileHash .\AI-Usage-Board-v1.0-portable.exe -Algorithm SHA256`，跟 Release 頁面上的 SHA-256 比對。
+   - 想確認檔案沒被竄改：在 PowerShell 執行 `Get-FileHash .\AI-Usage-Board-v1.1-portable.exe -Algorithm SHA256`，跟 Release 頁面上的 SHA-256 比對。
 3. 小工具會出現在主螢幕右上角，釘在桌面上（在其他視窗下方，不佔工作列）。可以拖曳、拉邊框調整大小，下次開啟會記住位置和大小；輪播、並排兩種顯示方式各自記住大小。已經開著時再執行一次，不會多開一個，現有的小工具會浮上來閃一下，讓你找到它。按 Win+D（顯示桌面）時小工具會暫時浮上來，切回其他視窗後自動回到桌面最下層。
 4. 小工具上的三顆按鈕：⟳ 立即更新、⇄ 切換輪播／並排、⚙ 設定。在小工具上按右鍵，還有「關於」與「結束」；關於頁有 GitHub 連結，可以看新版與回報問題。
 5. Windows 右下角通知區（時鐘旁邊，可能收在「^」裡）也有本程式的圖示：右鍵有同樣的選單（含「結束」），左鍵按一下小工具會浮上來閃一下，找不到小工具時很好用。

@@ -167,12 +167,11 @@ pub fn merge_outcomes(
     }
 }
 
-/// 更新 state.json 的內容：保險絲跳脫紀錄、看過的額度 ID（只記第一次查到的，見 record_first_seen_quotas）。
+/// 更新 state.json 的內容：保險絲跳脫紀錄。
 /// 回傳保險絲是否「這一輪才剛跳脫」（呼叫端要寫一筆警告 log）。
 pub fn update_runtime_state(
     state: &mut RuntimeState,
     outcomes: &[ProviderOutcome],
-    snapshot: &UsageSnapshot,
     now: i64,
 ) -> bool {
     let mut newly_tripped = false;
@@ -193,49 +192,5 @@ pub fn update_runtime_state(
         }
     }
 
-    record_first_seen_quotas(&mut state.seen_quota_ids, snapshot);
-
     newly_tripped
-}
-
-/// 額度 ID 屬於哪一家的前綴，例如 "claude."（額度 ID 一律以服務 ID 開頭，見 41「額度 ID」）。
-fn provider_prefix(id: ProviderId) -> String {
-    let name = match id {
-        ProviderId::Claude => "claude",
-        ProviderId::Codex => "codex",
-        ProviderId::Antigravity => "antigravity",
-    };
-    format!("{name}.")
-}
-
-/// 「看過的額度」起始清單（FR-12）：某一家第一次查到額度時，把當時所有額度都當成看過，
-/// 這樣第一次開設定頁不會每一項都標「新」。之後才新出現的額度不加入，設定頁就會標「新」，
-/// 直到使用者在設定頁按「儲存」（mark_all_quotas_seen）。
-pub fn record_first_seen_quotas(seen_quota_ids: &mut Vec<String>, snapshot: &UsageSnapshot) {
-    for provider in &snapshot.providers {
-        let prefix = provider_prefix(provider.id);
-        let mut has_seen_this_provider = false;
-        for seen_id in seen_quota_ids.iter() {
-            if seen_id.starts_with(&prefix) {
-                has_seen_this_provider = true;
-            }
-        }
-        if has_seen_this_provider {
-            continue;
-        }
-        for quota in &provider.quotas {
-            seen_quota_ids.push(quota.id.clone());
-        }
-    }
-}
-
-/// 使用者在設定頁按了儲存：目前快取裡所有額度都算看過，不再標「新」。
-pub fn mark_all_quotas_seen(seen_quota_ids: &mut Vec<String>, snapshot: &UsageSnapshot) {
-    for provider in &snapshot.providers {
-        for quota in &provider.quotas {
-            if !seen_quota_ids.contains(&quota.id) {
-                seen_quota_ids.push(quota.id.clone());
-            }
-        }
-    }
 }

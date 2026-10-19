@@ -3,7 +3,7 @@
   用途：設定視窗「服務」頁裡的一家服務（43「設定視窗」、FR-11、FR-12）：
         - 啟用開關；
         - CLI 位置：顯示自動偵測結果；可手打或「瀏覽…」選 .exe／.cmd；「改回自動偵測」；檔案不存在時欄位下方即時提示；
-        - 額度勾選清單：來自最新一次查到的額度，新出現的標「新」；
+        - 額度勾選清單：來自最新一次查到的額度（新出現的額度預設不勾，不另外標示）；
         - Antigravity 保險絲跳脫時，顯示原因與「我已確認，恢復查詢」按鈕（事件交給上一層處理）。
         這個元件直接修改傳進來的「這一家的設定草稿」，按儲存之前不會寫檔。
   誰會用到：ProvidersPage。
@@ -15,7 +15,6 @@ import { quotaLabel } from "../../i18n/format";
 import type { AntigravityFuse } from "../../types/app";
 import type { ProviderKey, ProviderSettings } from "../../types/settings";
 import type { Quota } from "../../types/usage";
-import { isNewQuota } from "../../utils/settings-form";
 import { formatAbsolute } from "../../utils/time";
 import FieldError from "./FieldError.vue";
 
@@ -29,8 +28,6 @@ const props = defineProps<{
   providerDraft: ProviderSettings;
   /** 最近一次查到的額度 */
   quotas: Quota[];
-  /** 看過的額度 ID（不在裡面的標「新」） */
-  seenQuotaIds: string[];
   /** 自動偵測結果：undefined＝偵測中、null＝找不到、字串＝找到的路徑 */
   detectedPath: string | null | undefined;
   /** 保險絲狀態（只有 Antigravity 會傳；跳脫時才顯示提示） */
@@ -111,7 +108,6 @@ function useAutoDetect() {
             <label v-for="quota in quotas" :key="quota.id" class="check">
               <input v-model="providerDraft.visible_quotas" type="checkbox" :value="quota.id" />
               <span>{{ quotaLabel(t, quota) }}</span>
-              <span v-if="isNewQuota(quota.id, seenQuotaIds)" class="badge-new">{{ t("settings.providers.quota_new") }}</span>
             </label>
           </div>
           <p v-else class="field-hint">{{ t("settings.providers.no_quotas") }}</p>

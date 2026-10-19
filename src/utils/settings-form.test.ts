@@ -1,6 +1,6 @@
 // 檔案：utils/settings-form.test.ts
 // 用途：驗證設定畫面的純計算：預設值與 default-settings.toml 一致、邊框模式換算（FR-18）、
-//       欄位警告查找、「新」額度判斷（FR-12）、整數解析。
+//       欄位警告查找、整數解析。
 // 誰會用到：`npm run test`（Vitest）。
 
 import { describe, expect, it } from "vitest";
@@ -14,7 +14,6 @@ import {
   borderFieldKey,
   borderModeOf,
   borderValueFor,
-  isNewQuota,
   parseInteger,
   warningFor,
 } from "./settings-form";
@@ -105,11 +104,6 @@ describe("欄位警告與新額度", () => {
   it("依欄位名稱找到警告", () => {
     expect(warningFor("general.refresh_interval_minutes", warnings)?.kind).toBe("out_of_range");
     expect(warningFor("general.log_retention_days", warnings)).toBeUndefined();
-  });
-
-  it("沒看過的額度標新", () => {
-    expect(isNewQuota("codex.extra.x.primary", ["codex.primary"])).toBe(true);
-    expect(isNewQuota("codex.primary", ["codex.primary"])).toBe(false);
   });
 });
 

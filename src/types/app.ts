@@ -28,8 +28,7 @@ export interface AntigravityFuse {
   num_turns: number | null;
 }
 
-/** get_runtime_state 的回傳：保險絲、看過的額度 ID（設定頁標「新」用） */
+/** get_runtime_state 的回傳：保險絲 */
 export interface RuntimeSummary {
   antigravity_fuse: AntigravityFuse;
-  seen_quota_ids: string[];
 }
