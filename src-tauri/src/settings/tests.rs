@@ -1,6 +1,7 @@
 //! 檔案：settings/tests.rs
 //! 用途：settings 模組的單元測試：第一次建立、壞檔、缺欄位、型別錯、超範圍、保留註解寫回、舊版檔案補欄位、
 //!       已移除的舊段落（[background]）讀取時忽略、儲存時刪掉。
+//!       公開版沒有 docs/，所以拿掉「預設設定檔與 docs/41_DATA_MODEL.md 一致」的測試（該測試只留在私有開發版）。
 //! 誰會用到：`cargo test`；只用暫存資料夾，不碰使用者真正的 %APPDATA%。
 
 use super::load::{load_from_text, load_or_create};
@@ -41,20 +42,6 @@ fn bundled_defaults_match_the_data_model() {
         5,
         "Antigravity 預設顯示五個額度（Gemini、Claude+GPT 各兩個，加上 Argon 每週）"
     );
-}
-
-#[test]
-fn bundled_defaults_are_identical_to_the_data_model_document() {
-    // 41_DATA_MODEL.md「設定檔」一節的 toml 區塊，就是預設設定檔的完整內容；兩邊不一致就失敗，提醒同步
-    let document = include_str!("../../../docs/41_DATA_MODEL.md").replace("\r\n", "\n");
-    let start_marker = "```toml\n";
-    let block_start = document.find(start_marker).expect("41 應有 toml 區塊") + start_marker.len();
-    let rest = &document[block_start..];
-    let block_end = rest.find("```").expect("toml 區塊應有結尾");
-    let block = &rest[..block_end];
-
-    let bundled = DEFAULT_SETTINGS_TEXT.replace("\r\n", "\n");
-    assert_eq!(block, bundled);
 }
 
 #[test]
