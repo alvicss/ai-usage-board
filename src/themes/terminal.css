@@ -71,7 +71,18 @@
 }
 
 .terminal-prompt.reserve-toolbar {
-  padding-right: calc(88px * var(--scale));
+  padding-right: calc(116px * var(--scale));
+}
+
+/* 右上角按鈕放在提示字元那一行（比其他主題往上 3px，和提示字元垂直置中），
+   下面服務名稱那一行就不用讓位：並排時最右邊卡片的名稱（例如 Antigravity）才能完整顯示（2026-11-14）。
+   只有前面真的有提示字元時才不讓位（沒有任何服務的空白卡片沒有提示字元，照常讓位）。 */
+[data-theme="terminal"] .toolbar {
+  top: calc(9px * var(--scale));
+}
+
+[data-theme="terminal"] .terminal-prompt + .card-head.reserve-toolbar {
+  padding-right: 0;
 }
 
 /* 額度列：標籤｜字元條｜百分比｜重置時間（最右邊，放不下時省略） */

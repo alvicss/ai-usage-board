@@ -3,13 +3,14 @@
 //!       額度順序：主要額度（primary、secondary）在前，額外額度（每個 limitId 一組）在後；組內週期短的在前（order_quotas）。
 //!       有 id=2 的 result 但 rateLimits 不存在、是 null、或 primary／secondary 都沒有 → no_quota（帳號沒有訂閱額度資料）；
 //!       找不到 id=2 回應、沒有 result 或格式錯亂 → parse_error。
+//!       同一個回應裡的 rateLimitResetCredits 是重置券（M-014），解析成 reset_credits；看不懂時只略過重置券。
 //! 誰會用到：M-002 查詢入口與後續排程模組。
 
 use super::locate::locate_cli;
 use super::process::{ManagedProcess, ProcessError};
 use super::{
     clamp_percent, order_quotas, quota_label, title_case_ascii, ProviderError, ProviderId,
-    ProviderResult, ProviderUsage, Quota, StatusCode,
+    ProviderResult, ProviderUsage, Quota, ResetCredit, ResetCredits, StatusCode,
 };
 use serde_json::{json, Value};
 use std::time::{Duration, Instant};
@@ -180,6 +181,41 @@ pub fn parse_response(content: &str) -> ProviderResult<ProviderUsage> {
         last_attempt_at: None,
         last_success_at: None,
         quotas,
+        reset_credits: parse_reset_credits(result.get("rateLimitResetCredits")),
+    })
+}
+
+/// 解析重置券（M-014，45「Codex」）：result.rateLimitResetCredits = { availableCount, credits: [...] | null }。
+/// - 欄位不存在或是 null：這次沒有回報重置券 → None（畫面不顯示重置券）。
+/// - credits 是 null：只知道張數、沒有明細；明細也可能比張數少（CLI 說明：後端可能限制明細筆數）。
+/// - 只收 status = available 的券；兌換中（redeeming）、已兌換（redeemed）、不明（unknown）都不算。
+/// - expiresAt 是 epoch 秒，null 代表不會過期。
+///   格式看不懂時只略過重置券（回傳 None），不影響額度的查詢結果。
+fn parse_reset_credits(value: Option<&Value>) -> Option<ResetCredits> {
+    let summary = value?.as_object()?;
+    let available_count = summary.get("availableCount")?.as_u64()?;
+    let available_count = u32::try_from(available_count).unwrap_or(u32::MAX);
+
+    let mut credits = Vec::new();
+    if let Some(items) = summary.get("credits").and_then(Value::as_array) {
+        for item in items {
+            let status = item.get("status").and_then(Value::as_str);
+            if status != Some("available") {
+                continue;
+            }
+            credits.push(ResetCredit {
+                expires_at: item.get("expiresAt").and_then(Value::as_i64),
+                title: item
+                    .get("title")
+                    .and_then(Value::as_str)
+                    .map(str::to_string),
+            });
+        }
+    }
+
+    Some(ResetCredits {
+        available_count,
+        credits,
     })
 }
 
@@ -390,5 +426,78 @@ mod tests {
             .quotas
             .iter()
             .all(|quota| { quota.used_percent >= 0.0 && quota.used_percent <= 100.0 }));
+    }
+
+    #[test]
+    fn parses_reset_credits_from_live_fixture() {
+        // 2026-11-14 實測（codex-cli 0.167.1）：2 張可用的重置券，各有到期時間
+        let content = include_str!("../../tests/fixtures/codex-reset-credits.jsonl");
+        let usage = parse_response(content).expect("含重置券的 fixture 應可解析");
+        let credits = usage.reset_credits.expect("應有重置券資料");
+        assert_eq!(credits.available_count, 2);
+        assert_eq!(credits.credits.len(), 2);
+        assert_eq!(credits.credits[0].expires_at, Some(1_796_163_567));
+        assert_eq!(credits.credits[1].expires_at, Some(1_797_113_812));
+        assert_eq!(credits.credits[0].title.as_deref(), Some("Full reset (Weekly + 5 hr)"));
+    }
+
+    #[test]
+    fn reset_credits_with_zero_count_or_no_detail() {
+        // 2026-09 的 fixture：0 張、明細是空清單 → 有回報、但沒有券
+        let content = include_str!("../../tests/fixtures/codex-ok.jsonl");
+        let usage = parse_response(content).expect("Codex fixture 應可解析");
+        let credits = usage.reset_credits.expect("有回報就不是 None");
+        assert_eq!(credits.available_count, 0);
+        assert!(credits.credits.is_empty());
+
+        // credits 是 null：只知道張數、沒有明細
+        let count_only = fixture_with_result(|result| {
+            result["rateLimitResetCredits"] = json!({ "availableCount": 3, "credits": null });
+        });
+        let credits = parse_response(&count_only)
+            .expect("應可解析")
+            .reset_credits
+            .expect("有張數就要回報");
+        assert_eq!(credits.available_count, 3);
+        assert!(credits.credits.is_empty());
+    }
+
+    #[test]
+    fn only_available_reset_credits_are_kept() {
+        let content = fixture_with_result(|result| {
+            result["rateLimitResetCredits"] = json!({
+                "availableCount": 1,
+                "credits": [
+                    { "status": "redeemed", "expiresAt": 1_800_000_000, "title": null },
+                    { "status": "available", "expiresAt": null, "title": null },
+                    { "status": "redeeming", "expiresAt": 1_800_000_100, "title": null }
+                ]
+            });
+        });
+        let credits = parse_response(&content)
+            .expect("應可解析")
+            .reset_credits
+            .expect("應有重置券資料");
+        assert_eq!(credits.credits.len(), 1, "只收 status = available");
+        assert_eq!(credits.credits[0].expires_at, None, "expiresAt null 代表不會過期");
+    }
+
+    #[test]
+    fn missing_or_unreadable_reset_credits_do_not_break_quotas() {
+        // 舊版 CLI 沒有這個欄位、或是 null：不顯示重置券，額度照常
+        let missing = fixture_with_result(|result| {
+            result.as_object_mut().expect("result").remove("rateLimitResetCredits");
+        });
+        let usage = parse_response(&missing).expect("沒有重置券欄位仍要成功");
+        assert_eq!(usage.reset_credits, None);
+        assert!(!usage.quotas.is_empty());
+
+        // 格式看不懂（例如改版成文字）：只略過重置券
+        let unreadable = fixture_with_result(|result| {
+            result["rateLimitResetCredits"] = json!("two");
+        });
+        let usage = parse_response(&unreadable).expect("重置券看不懂不能讓整家失敗");
+        assert_eq!(usage.reset_credits, None);
+        assert_eq!(usage.status, StatusCode::Ok);
     }
 }

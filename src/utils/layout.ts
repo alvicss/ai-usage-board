@@ -2,7 +2,8 @@
 // 用途：小工具「隨視窗大小調整」的純計算（43「響應式規則」）：
 //       1. 基準字級與縮放比例：所有尺寸以 43 的 px 值乘上縮放比例。
 //       2. 並排模式橫排或直排：寬高比 ≥ 1.6 橫排，否則直排；每張卡片的可用寬高。
-//       3. 精簡模式：卡片高度放不下完整內容時，隱藏重置時間（改用滑鼠停留提示）；三種版面（橫條、字元條、環狀表）各自估算。
+//       3. 精簡模式：卡片高度放不下完整內容時，隱藏重置時間（改用滑鼠停留提示）；三種版面（橫條、字元條、環狀表）各自估算，
+//          額度下方有重置券那一行（M-014）時多算一行的高度。
 //       4. 工程師主題的字元進度條格數（一般 10～24 格，依卡片寬度；卡片很窄時最少 4 格、重置時間改放提示）、
 //          儀表主題的環最大高度。
 // 誰會用到：WidgetView（算縮放與排列方向）、ProviderCard（判斷自己要不要精簡、字元條格數、環的大小）。
@@ -29,10 +30,16 @@ const CARD_GAP_PX = 10;
 /** 卡片左右內距（card.css：16px） */
 const CARD_PADDING_X_PX = 16;
 
-/** 估算卡片高度用（px，縮放前）：標題列＋頁尾＋內距＋間距，以及一行額度（或一組環）完整顯示時的高度 */
+/**
+ * 估算卡片高度用（px，縮放前）：標題列＋頁尾＋內距＋間距，以及一行額度完整顯示時的高度。
+ * 橫條（簡約、玻璃、霓虹）一行額度＝百分比那一行（字級 × 1.1 行高＋上下 3px 內距）＋重置時間一行（15px）＋行距 6px，
+ * 百分比字級各主題不同（簡約 26px、玻璃 20px、霓虹 18px，見 themes/*.css 的 --w-num-size），所以一行的高度也不同
+ * （M-014 前三個主題共用簡約的 55px；加了重置券那一行後，玻璃、霓虹在預設大小明明放得下卻被判成精簡，才改成各自估算）。
+ */
 const LAYOUT_METRICS = {
-  /** 橫條（玻璃、簡約、霓虹）：一行額度＋下一行重置時間 */
-  bars: { chrome: 84, fullRow: 55 },
+  minimal: { chrome: 84, fullRow: 55 },
+  glass: { chrome: 84, fullRow: 49 },
+  neon: { chrome: 84, fullRow: 47 },
   /** 字元條（工程師）：上面多一行提示字元；重置時間在同一行右邊 */
   terminal: { chrome: 100, fullRow: 24 },
 };
@@ -42,6 +49,8 @@ const GAUGE_TEXT_FULL_PX = 44;
 const GAUGE_TEXT_COMPACT_PX = 30;
 const GAUGE_MIN_RING_PX = 56;
 const GAUGE_SMALLEST_RING_PX = 24;
+/** 重置券那一行（M-014）：徽章高 18px＋卡片內的間距 10px；有這一行時，卡片要多預留這個高度 */
+const CREDIT_ROW_PX = 28;
 
 /** 工程師主題：額度列字級 12.5px、等寬字每個字寬約 0.6 字；格數限制 10～24 格（43） */
 const TERMINAL_FONT_PX = 12.5;
@@ -125,9 +134,18 @@ export function computeLayout(
   return { scale, direction, cardWidth, cardHeight, forceCompact };
 }
 
+/** 有重置券那一行時要多預留的高度（縮放前 px）；沒有那一行時是 0 */
+function creditRowHeight(hasCreditRow: boolean): number {
+  if (hasCreditRow) {
+    return CREDIT_ROW_PX;
+  }
+  return 0;
+}
+
 /**
  * 判斷一張卡片放不放得下完整版面（每個額度都顯示重置時間）。
- * 輸入：卡片可用高度（px）、這張卡片要顯示幾個額度、縮放比例、是否已被強制精簡、目前主題。
+ * 輸入：卡片可用高度（px）、這張卡片要顯示幾個額度、縮放比例、是否已被強制精簡、目前主題、
+ *       額度下方有沒有重置券那一行（M-014，省略時當作沒有）。
  */
 export function needsCompact(
   cardHeight: number,
@@ -135,35 +153,41 @@ export function needsCompact(
   scale: number,
   forceCompact: boolean,
   theme: ThemeId,
+  hasCreditRow = false,
 ): boolean {
   if (forceCompact) {
     return true;
   }
+  const creditHeight = creditRowHeight(hasCreditRow);
 
   // 儀表：環排成一列，額度多少不影響高度；環小到放不下重置時間才精簡
   if (theme === "gauge") {
-    const neededHeight = (GAUGE_CHROME_PX + GAUGE_TEXT_FULL_PX + GAUGE_MIN_RING_PX) * scale;
+    const neededHeight = (GAUGE_CHROME_PX + GAUGE_TEXT_FULL_PX + GAUGE_MIN_RING_PX + creditHeight) * scale;
     return cardHeight < neededHeight;
   }
 
-  let metrics = LAYOUT_METRICS.bars;
-  if (theme === "terminal") {
-    metrics = LAYOUT_METRICS.terminal;
-  }
-  const neededHeight = (metrics.chrome + metrics.fullRow * rowCount) * scale;
+  // 其他四種主題各自的估算值（儀表已在上面處理）
+  const metrics = LAYOUT_METRICS[theme];
+  const neededHeight = (metrics.chrome + metrics.fullRow * rowCount + creditHeight) * scale;
   return cardHeight < neededHeight;
 }
 
 /**
  * 儀表主題：環最多可以多高（px），環的大小依卡片高度自動縮小，下方的標籤與重置時間才放得下。
- * 輸入：卡片可用高度、縮放比例、是否精簡（精簡時不顯示重置時間，環可以大一點）。
+ * 輸入：卡片可用高度、縮放比例、是否精簡（精簡時不顯示重置時間，環可以大一點）、
+ *       有沒有重置券那一行（有的話環再小一點，省略時當作沒有）。
  */
-export function gaugeRingMaxHeight(cardHeight: number, scale: number, compact: boolean): number {
+export function gaugeRingMaxHeight(
+  cardHeight: number,
+  scale: number,
+  compact: boolean,
+  hasCreditRow = false,
+): number {
   let textHeight = GAUGE_TEXT_FULL_PX;
   if (compact) {
     textHeight = GAUGE_TEXT_COMPACT_PX;
   }
-  const available = cardHeight - (GAUGE_CHROME_PX + textHeight) * scale;
+  const available = cardHeight - (GAUGE_CHROME_PX + textHeight + creditRowHeight(hasCreditRow)) * scale;
   return Math.max(GAUGE_SMALLEST_RING_PX * scale, available);
 }
 

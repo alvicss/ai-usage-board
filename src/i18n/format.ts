@@ -1,20 +1,21 @@
 // 檔案：i18n/format.ts
 // 用途：把資料組成「畫面上要顯示的文字」：額度標籤、重置時間（倒數／絕對時間／兩者；工程師與儀表主題用短格式）、
-//       「N 分鐘前更新」、查詢失敗原因、設定警告的參數（範圍、選項、型別依語言組字，FR-17）。
+//       重置券的到期文字（M-014）、「N 分鐘前更新」、查詢失敗原因、設定警告的參數（範圍、選項、型別依語言組字，FR-17）。
 //       數字計算在 utils/time.ts，文字一律來自翻譯檔。
 // 誰會用到：ProviderCard、QuotaRow、TerminalRow、GaugeRing、設定畫面（欄位錯誤、讀檔警告、額度勾選清單）、WidgetView。
 
 import type { ResetTimeFormat, SettingsWarning } from "../types/settings";
 import type { ProviderId, ProviderUsage, Quota } from "../types/usage";
+import type { CreditSummary } from "../utils/reset-credits";
 import { countdownParts, formatAbsolute, minutesSince } from "../utils/time";
 
 /** 翻譯函式（vue-i18n 的 t），寫成最簡單的形狀，方便單元測試直接傳入 */
 export type Translate = (key: string, named: Record<string, unknown>) => string;
 
-/** 這些標籤前面要加上群組名稱，例如 Antigravity 的「Gemini 5 小時」 */
+/** 這些標籤前面要加上群組名稱（有的話），例如 Antigravity 的「Argon 每週」「Claude+GPT 5 小時」 */
 const PREFIX_LABEL_KEYS = ["quota.five_hour", "quota.weekly", "quota.unknown_window"];
 
-/** 額度標籤，例如「5 小時」「Gemini 每週」「Fable 每週」 */
+/** 額度標籤，例如「5 小時」「Argon 每週」「Fable 每週」 */
 export function quotaLabel(t: Translate, quota: Quota): string {
   const labelParameter = quota.label_param ?? "";
   if (PREFIX_LABEL_KEYS.includes(quota.label_key)) {
@@ -112,6 +113,42 @@ export function compactResetText(
     return { text: `${countdown} · ${absolute}`, expired: false };
   }
   return { text: countdown, expired: false };
+}
+
+/**
+ * 卡片重置券那一行的到期文字（M-014），例如「最快到期 13 天 4 小時後」「到期 11/27 14:00」。
+ * 時間沿用「重置時間格式」設定；shortForm 為 true 時用短格式（工程師、儀表主題，和它們的額度列一致）。
+ * 只有 1 張時寫「到期」，2 張以上寫「最快到期」；全部不會過期、或 CLI 沒給到期時間時顯示對應說明。
+ */
+export function creditExpiryText(
+  t: Translate,
+  summary: CreditSummary,
+  format: ResetTimeFormat,
+  nowMilliseconds: number,
+  shortForm: boolean,
+): string {
+  if (summary.expiryKind === "never") {
+    return t("credits.never_expires", {});
+  }
+  if (summary.expiryKind === "unknown" || summary.earliestExpiresAt === null) {
+    return t("credits.no_detail", {});
+  }
+
+  let time: ResetText | null;
+  if (shortForm) {
+    time = compactResetText(t, summary.earliestExpiresAt, format, nowMilliseconds);
+  } else {
+    time = resetText(t, summary.earliestExpiresAt, format, nowMilliseconds);
+  }
+  // 理論上不會是 null（上面已確認有到期時間），保險起見回傳「未提供到期時間」
+  if (time === null) {
+    return t("credits.no_detail", {});
+  }
+
+  if (summary.count > 1) {
+    return t("credits.next_expiry", { time: time.text });
+  }
+  return t("credits.expiry", { time: time.text });
 }
 
 /**

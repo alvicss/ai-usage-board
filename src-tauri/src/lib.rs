@@ -2,7 +2,7 @@
 //! 用途：組裝整個 Tauri 程式：註冊外掛與指令，啟動時依序準備資料夾 → 讀設定 → 開 log →
 //!       開機自動啟動重新登記 → 讀快取與狀態 → 建立排程器 → 擺好小工具視窗 → 開始背景排程 → 開始監聽 Win+D →
 //!       建立系統匣圖示；
-//!       並監聽小工具視窗的事件（失去焦點、Windows 切換亮暗時維持玻璃材質）。
+//!       並監聽小工具視窗的事件（失去焦點、Windows 切換亮暗時維持玻璃材質）與重置券小視窗的事件（失去焦點就關閉）。
 //! 誰會用到：main.rs（程式進入點）。
 
 mod about;
@@ -14,6 +14,7 @@ mod desktop;
 mod logging;
 mod paths;
 mod providers;
+mod reset_credits_window;
 mod runtime_state;
 mod scheduler;
 mod settings;
@@ -42,6 +43,9 @@ pub fn run() {
             commands::save_window_bounds,
             commands::open_settings,
             commands::close_settings,
+            commands::open_reset_credits,
+            commands::reveal_reset_credits,
+            commands::close_reset_credits,
             commands::quit_app,
             settings_commands::get_settings,
             settings_commands::check_settings,
@@ -54,8 +58,13 @@ pub fn run() {
             about::open_repository,
             system_info::get_system_info
         ])
-        // 小工具失去焦點、或 Windows 切換淺色／深色之後，玻璃材質要重新標成「作用中」才不會變灰（desktop.rs）
+        // 小工具失去焦點、或 Windows 切換淺色／深色之後，玻璃材質要重新標成「作用中」才不會變灰（desktop.rs）；
+        // 重置券小視窗失去焦點（點了別的地方）就關閉（M-014）
         .on_window_event(|window, event| {
+            if window.label() == reset_credits_window::RESET_CREDITS_LABEL {
+                reset_credits_window::on_window_event(window.app_handle(), event);
+                return;
+            }
             if window.label() != widget_window::WIDGET_LABEL {
                 return;
             }

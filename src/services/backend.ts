@@ -1,7 +1,7 @@
 // 檔案：services/backend.ts
 // 用途：畫面呼叫 Rust 指令、監聽 Rust 事件的「唯一」入口（40「Vue 與 Rust 的介面」），元件不直接碰 IPC。
 //       在一般瀏覽器用 `npm run dev` 預覽時（沒有 Tauri），改回傳 preview-data.ts 的示範資料，方便看畫面。
-// 誰會用到：WidgetView、SettingsView 與設定視窗的各頁元件。
+// 誰會用到：WidgetView、SettingsView、ResetCreditsView（重置券小視窗）與設定視窗的各頁元件。
 
 import { invoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
@@ -99,6 +99,33 @@ export function closeSettings(): Promise<void> {
     return Promise.resolve();
   }
   return invoke<void>("close_settings");
+}
+
+/** 票券圖示：重置券小視窗沒開就開、開著就關（M-014） */
+export function openResetCredits(): Promise<void> {
+  if (!inTauri) {
+    return Promise.resolve();
+  }
+  return invoke<void>("open_reset_credits");
+}
+
+/**
+ * 重置券小視窗畫好後：告訴 Rust 內容高度（CSS px）與像素比例（devicePixelRatio），
+ * Rust 調整大小、放到小工具旁邊並顯示（像素比例含 Windows 縮放與文字放大，Rust 換算實體像素用）
+ */
+export function revealResetCredits(height: number, pixelRatio: number): Promise<void> {
+  if (!inTauri) {
+    return Promise.resolve();
+  }
+  return invoke<void>("reveal_reset_credits", { height, pixelRatio });
+}
+
+/** 重置券小視窗的 ✕ 按鈕、Esc：關閉小視窗 */
+export function closeResetCredits(): Promise<void> {
+  if (!inTauri) {
+    return Promise.resolve();
+  }
+  return invoke<void>("close_reset_credits");
 }
 
 /** 右鍵「結束」 */

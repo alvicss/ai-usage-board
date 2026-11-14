@@ -27,3 +27,5 @@ AGENTS.md
 .agents/
 tools/
 _public-release/
+# Windows 檔案總管的資料夾外觀設定（例如資料夾顏色標記），每台電腦不同，不進版控。
+desktop.ini

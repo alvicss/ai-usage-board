@@ -1,0 +1,10 @@
+{
+  "description": "重置券小視窗（M-014）的最小權限：聽 Rust 事件（用量更新時清單跟著更新）。開關與顯示視窗都由 Rust 指令處理；沒有任何執行外部程式、讀寫檔案或連網的權限。",
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "reset-credits",
+  "windows": ["reset-credits"],
+  "permissions": [
+    "core:event:allow-listen",
+    "core:event:allow-unlisten"
+  ]
+}

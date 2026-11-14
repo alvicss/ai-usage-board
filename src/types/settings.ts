@@ -35,6 +35,8 @@ export interface ProviderSettings {
   enabled: boolean;
   cli_path: string;
   visible_quotas: string[];
+  /** 卡片的額度下方是否多一行重置券（M-014；只有 Codex 的設定檔有這個欄位，其他兩家固定 false） */
+  show_reset_credits: boolean;
 }
 
 /** 整份設定 */

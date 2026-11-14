@@ -112,6 +112,11 @@ pub struct SingleProviderSettings {
     pub enabled: bool,
     pub cli_path: String,
     pub visible_quotas: Vec<String>,
+    /// 卡片的額度下方是否多一行重置券（張數＋最快到期時間，M-014）。
+    /// 只有會回報重置券的服務（目前只有 Codex）在預設設定檔裡有這個欄位；
+    /// 其他兩家沒有，讀進來就是 false（serde default），設定頁也不顯示這個勾選。
+    #[serde(default)]
+    pub show_reset_credits: bool,
 }
 
 /// 設定模組可能遇到的錯誤（只有「程式本身有問題」或「無法讀寫檔案」才會出現；

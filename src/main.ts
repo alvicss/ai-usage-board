@@ -17,6 +17,7 @@ import "@fontsource/orbitron/latin-700.css";
 import "./styles/base.css";
 import "./styles/card.css";
 import "./styles/layout.css";
+import "./styles/reset-credits.css";
 import "./styles/settings.css";
 import "./styles/settings-pages.css";
 import "./themes/minimal.css";

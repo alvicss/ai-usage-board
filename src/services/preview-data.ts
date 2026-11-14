@@ -7,6 +7,7 @@
 //       - size=360x230：小工具畫在固定大小的框裡（截圖比對用；無頭瀏覽器的視窗最小寬度比小工具大）
 //       - opacity=：整體不透明度（30～100）
 //       - material=none：模擬沒有 Acrylic 的 Windows 10（玻璃主題改半透明底）
+//       - reset-credits：預覽重置券小視窗（M-014），例如 http://localhost:1420/?reset-credits&theme=terminal&scheme=dark
 //       設定畫面「外觀」頁上方的即時預覽，也用這裡的示範卡片（previewCardProvider）。
 // 誰會用到：services/backend.ts（只在不是 Tauri 程式時使用）、components/settings/WidgetPreview.vue、App.vue（示意桌布）。
 
@@ -107,8 +108,8 @@ function previewSettings(): Settings {
       },
     },
     providers: {
-      claude: { enabled: true, cli_path: "", visible_quotas: ["claude.five_hour", "claude.seven_day"] },
-      codex: { enabled: true, cli_path: "", visible_quotas: ["codex.primary", "codex.secondary"] },
+      claude: { enabled: true, cli_path: "", visible_quotas: ["claude.five_hour", "claude.seven_day"], show_reset_credits: false },
+      codex: { enabled: true, cli_path: "", visible_quotas: ["codex.primary", "codex.secondary"], show_reset_credits: true },
       antigravity: {
         enabled: true,
         cli_path: "",
@@ -119,6 +120,7 @@ function previewSettings(): Settings {
           "antigravity.3p-weekly",
           "antigravity.gemini-argon-wtu-weekly",
         ],
+        show_reset_credits: false,
       },
     },
   };
@@ -131,7 +133,7 @@ export function previewSettingsResponse(): SettingsResponse {
 
 /**
  * 預覽用的用量資料：Claude 正常、Codex 超過警示門檻、Antigravity 離線但有舊資料。
- * Codex 的數字與畫面示意「五種主題，亮暗並列」相同（5 小時 88%、每週 46%），方便截圖比對。
+ * Codex 的數字與畫面示意「五種主題，亮暗並列」相同（5 小時 88%、每週 46%），方便截圖比對；Codex 另有 2 張重置券（M-014）。
  * 網址有 only=<服務 ID> 時只留那一家。
  */
 export function previewSnapshot(): UsageSnapshot {
@@ -170,6 +172,7 @@ function previewSnapshotAt(now: number): UsageSnapshot {
           { id: "claude.seven_day", label_key: "quota.weekly", label_param: null, used_percent: 27, resets_at: now + 273600, window_minutes: 10080 },
           { id: "claude.model.fable", label_key: "quota.model_weekly", label_param: "Fable", used_percent: 35, resets_at: now + 273600, window_minutes: 10080 },
         ],
+        reset_credits: null,
       },
       {
         id: "codex",
@@ -184,6 +187,14 @@ function previewSnapshotAt(now: number): UsageSnapshot {
           { id: "codex.primary", label_key: "quota.five_hour", label_param: null, used_percent: 88, resets_at: now + 3930, window_minutes: 300 },
           { id: "codex.secondary", label_key: "quota.weekly", label_param: null, used_percent: 46, resets_at: now + 385230, window_minutes: 10080 },
         ],
+        // 2 張重置券（M-014）：13 天後、24 天後到期（和 2026-11-14 實測的張數相同）
+        reset_credits: {
+          available_count: 2,
+          credits: [
+            { expires_at: now + 24 * 86400 + 3600, title: "Full reset (Weekly + 5 hr)" },
+            { expires_at: now + 13 * 86400 + 14400, title: "Full reset (Weekly + 5 hr)" },
+          ],
+        },
       },
       {
         id: "antigravity",
@@ -195,12 +206,13 @@ function previewSnapshotAt(now: number): UsageSnapshot {
         last_attempt_at: now - 60,
         last_success_at: now - 2520,
         quotas: [
-          { id: "antigravity.gemini-5h", label_key: "quota.five_hour", label_param: "Gemini", used_percent: 16, resets_at: now + 10800, window_minutes: 300 },
-          { id: "antigravity.gemini-weekly", label_key: "quota.weekly", label_param: "Gemini", used_percent: 39, resets_at: now + 432000, window_minutes: 10080 },
+          { id: "antigravity.gemini-5h", label_key: "quota.five_hour", label_param: null, used_percent: 16, resets_at: now + 10800, window_minutes: 300 },
+          { id: "antigravity.gemini-weekly", label_key: "quota.weekly", label_param: null, used_percent: 39, resets_at: now + 432000, window_minutes: 10080 },
           { id: "antigravity.3p-5h", label_key: "quota.five_hour", label_param: "Claude+GPT", used_percent: 5, resets_at: now + 9600, window_minutes: 300 },
           { id: "antigravity.3p-weekly", label_key: "quota.weekly", label_param: "Claude+GPT", used_percent: 12, resets_at: now + 500000, window_minutes: 10080 },
           { id: "antigravity.gemini-argon-wtu-weekly", label_key: "quota.weekly", label_param: "Argon", used_percent: 6, resets_at: now + 600000, window_minutes: 10080 },
         ],
+        reset_credits: null,
       },
     ],
   };
@@ -208,7 +220,7 @@ function previewSnapshotAt(now: number): UsageSnapshot {
 
 /** 預覽用的關於頁資訊 */
 export function previewAppInfo(): AppInfo {
-  return { name: "AI Usage Board", version: "v1.1", license: "MIT" };
+  return { name: "AI Usage Board", version: "v1.2", license: "MIT" };
 }
 
 /** 預覽用的程式狀態：網址加 ?fuse=1 可預覽保險絲跳脫的提示 */
@@ -244,5 +256,6 @@ export function previewCardProvider(nowSeconds: number): ProviderUsage {
       { id: PREVIEW_CARD_QUOTA_IDS[0], label_key: "quota.five_hour", label_param: null, used_percent: 88, resets_at: nowSeconds + 7980, window_minutes: 300 },
       { id: PREVIEW_CARD_QUOTA_IDS[1], label_key: "quota.weekly", label_param: null, used_percent: 45, resets_at: nowSeconds + 273600, window_minutes: 10080 },
     ],
+    reset_credits: null,
   };
 }

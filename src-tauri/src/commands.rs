@@ -1,6 +1,6 @@
 //! 檔案：commands.rs
 //! 用途：小工具視窗使用的 Rust 指令（40「Vue 與 Rust 的介面」）：取用量快取、立即更新、切換顯示方式、
-//!       記住視窗位置大小、開關設定視窗、結束程式。設定視窗專用的指令在 settings_commands.rs，
+//!       記住視窗位置大小、開關設定視窗、開關重置券小視窗（M-014）、結束程式。設定視窗專用的指令在 settings_commands.rs，
 //!       關於頁的指令在 about.rs。一律列在 40 的表，不另開其他後門。
 //!       畫面端只能透過 src/services/backend.ts 呼叫這些指令。
 //! 誰會用到：lib.rs 註冊（generate_handler!）；畫面的 backend.ts。
@@ -8,7 +8,7 @@
 use crate::cache::UsageSnapshot;
 use crate::scheduler::Scheduler;
 use crate::settings::SettingsStore;
-use crate::{settings_window, widget_window};
+use crate::{reset_credits_window, settings_window, widget_window};
 use tauri::{AppHandle, Emitter, State};
 
 /// 小工具啟動時取得目前快取。
@@ -81,6 +81,32 @@ pub async fn open_settings(
 #[tauri::command]
 pub async fn close_settings(app: AppHandle) -> Result<(), String> {
     settings_window::close(&app)
+}
+
+/// 票券圖示：重置券小視窗沒開就開、開著就關（M-014）。建立的視窗先不顯示，等畫面呼叫 reveal_reset_credits。
+/// 必須是 async：Windows 上在同步指令裡建立視窗可能卡死（Tauri 官方說明）。
+#[tauri::command]
+pub async fn open_reset_credits(app: AppHandle, store: State<'_, SettingsStore>) -> Result<(), String> {
+    reset_credits_window::toggle(&app, &store.current())
+}
+
+/// 重置券小視窗的畫面畫好後：告訴 Rust 內容高度（CSS px）與畫面的像素比例（devicePixelRatio），
+/// Rust 調整大小、放到小工具旁邊並顯示。
+/// 寫成 async：會移動、縮放、顯示視窗，不在畫面事件處理途中直接改視窗（22 踩過的坑）。
+#[tauri::command]
+pub async fn reveal_reset_credits(
+    app: AppHandle,
+    height: f64,
+    pixel_ratio: f64,
+    store: State<'_, SettingsStore>,
+) -> Result<(), String> {
+    reset_credits_window::reveal(&app, &store.current(), height, Some(pixel_ratio))
+}
+
+/// 重置券小視窗的 ✕ 按鈕、Esc：關閉小視窗。寫成 async 的理由同 close_settings。
+#[tauri::command]
+pub async fn close_reset_credits(app: AppHandle) -> Result<(), String> {
+    reset_credits_window::close(&app)
 }
 
 /// 右鍵「結束」（系統匣的「結束」在 tray.rs，做的事相同）。同樣寫成 async，結束程式的要求由主執行緒依序處理。

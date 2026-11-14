@@ -8,7 +8,8 @@
     "menu_settings": "Settings…",
     "menu_about": "About…",
     "quit": "Quit",
-    "loading": "Loading…"
+    "loading": "Loading…",
+    "reset_credits": "Reset credits"
   },
   "widget": {
     "empty_title": "No service enabled",
@@ -16,6 +17,18 @@
     "no_quota": "No quota selected to show",
     "go_to": "Show {name}",
     "used": "{percent}% used"
+  },
+  "credits": {
+    "title": "Reset credits",
+    "label": "Resets",
+    "count": "{count} credits",
+    "next_expiry": "Next expires {time}",
+    "expiry": "Expires {time}",
+    "never_expires": "No expiry",
+    "no_detail": "Expiry not provided",
+    "more_without_detail": "{count} more without expiry info",
+    "empty": "No reset credits",
+    "close": "Close"
   },
   "quota": {
     "five_hour": "5h",
@@ -173,7 +186,9 @@
       "fuse_advice": "Make sure agy is up to date and this app was not started from Git Bash, then resume.",
       "fuse_reset": "I have checked it, resume queries",
       "fuse_resetting": "Resumed. Querying Antigravity again…",
-      "fuse_reset_failed": "Could not resume: {message}"
+      "fuse_reset_failed": "Could not resume: {message}",
+      "reset_credits": "Reset credits",
+      "show_reset_credits": "Show count and next expiry on the card"
     },
     "about": {
       "version": "Version",

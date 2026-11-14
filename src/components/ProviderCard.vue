@@ -1,7 +1,7 @@
 <!--
   檔案：components/ProviderCard.vue
   用途：一家服務的卡片（43「元件風格」）：
-        標題列（代表色小圓點＋名稱＋方案）→ 額度 → 頁尾（「N 分鐘前更新」）。
+        標題列（代表色小圓點＋名稱＋方案）→ 額度 →（有重置券而且設定有勾時）重置券一行（M-014）→ 頁尾（「N 分鐘前更新」）。
         額度依主題用三種畫法：玻璃／簡約／霓虹是橫條（QuotaRow）、工程師是字元條（TerminalRow，
         標題列上面多一行「~/ai-usage $ usage <服務>」提示字元）、儀表是環狀表（GaugeRing）。
         查詢失敗：數字與進度條淡化變灰，標題列下方一行琥珀色原因（FR-6）；
@@ -16,8 +16,10 @@ import type { ColorScheme, Settings } from "../types/settings";
 import type { ProviderUsage } from "../types/usage";
 import { gaugeRingMaxHeight, monoTextWidthEm, needsCompact, terminalRowLayout } from "../utils/layout";
 import { isFailedStatus, providerHasAlert, visibleQuotas } from "../utils/quota";
+import { creditSummary } from "../utils/reset-credits";
 import GaugeRing from "./GaugeRing.vue";
 import QuotaRow from "./QuotaRow.vue";
+import ResetCreditRow from "./ResetCreditRow.vue";
 import TerminalRow from "./TerminalRow.vue";
 
 const props = defineProps<{
@@ -40,8 +42,25 @@ const quotas = computed(() => visibleQuotas(props.provider, props.settings.provi
 const failed = computed(() => isFailedStatus(props.provider));
 const neverSucceeded = computed(() => props.provider.last_success_at === null);
 const alert = computed(() => providerHasAlert(props.provider, props.settings));
+
+/** 額度下方的重置券那一行（M-014）：設定有勾、而且目前有可用的券才顯示；null＝不顯示 */
+const credits = computed(() => {
+  const providerSettings = props.settings.providers[props.provider.id];
+  if (providerSettings === undefined || !providerSettings.show_reset_credits) {
+    return null;
+  }
+  return creditSummary(props.provider, props.now);
+});
+
 const compact = computed(() =>
-  needsCompact(props.cardHeight, quotas.value.length, props.scale, props.forceCompact, theme.value),
+  needsCompact(
+    props.cardHeight,
+    quotas.value.length,
+    props.scale,
+    props.forceCompact,
+    theme.value,
+    credits.value !== null,
+  ),
 );
 
 /** 有舊資料但這次查詢失敗：標題列下方的原因 */
@@ -92,13 +111,13 @@ const cardStyle = computed(() => {
   if (theme.value !== "gauge") {
     return undefined;
   }
-  const maxHeight = gaugeRingMaxHeight(props.cardHeight, props.scale, compact.value);
+  const maxHeight = gaugeRingMaxHeight(props.cardHeight, props.scale, compact.value, credits.value !== null);
   return { "--ring-max-h": `${maxHeight.toFixed(1)}px` };
 });
 </script>
 
 <template>
-  <article class="provider-card" :class="{ failed, alert, compact }" :style="cardStyle">
+  <article class="provider-card" :class="{ failed, alert, compact, 'has-credits': credits !== null }" :style="cardStyle">
     <div class="card-top">
       <!-- 工程師主題：標題列上方一行提示字元（服務 ID 照原文，不翻譯；不使用閃爍游標）。 -->
       <div
@@ -163,6 +182,15 @@ const cardStyle = computed(() => {
         :failed="failed"
       />
     </div>
+
+    <!-- 額度下方的重置券（M-014）：張數＋最快到期時間；完整清單在右上角票券圖示開的小視窗 -->
+    <ResetCreditRow
+      v-if="credits !== null"
+      :summary="credits"
+      :reset-format="settings.display.reset_time_format"
+      :now="now"
+      :theme="theme"
+    />
 
     <footer class="card-foot">
       <span class="updated-text">{{ updated }}</span>

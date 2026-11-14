@@ -180,6 +180,9 @@ pub fn parse_response(content: &str) -> ProviderResult<ProviderUsage> {
         last_attempt_at: None,
         last_success_at: None,
         quotas,
+        // 重置券：get_usage 回應裡的 rate_limits.cedar_ember 一直是 null（2026-11-14 實測，Claude Code 2.1.325），
+        // CLI 只有在使用重置券（/limit-reset）的流程才另外查明細，所以 Claude 目前沒有重置券資料（M-014）
+        reset_credits: None,
     })
 }
 
@@ -371,5 +374,16 @@ mod tests {
         let unreadable = fixture_with_rate_limits(json!({ "five_hour": { "used": 3 } }));
         let error = parse_response(&unreadable).expect_err("看不懂的額度必須失敗");
         assert_eq!(error.status, StatusCode::ParseError);
+    }
+
+    #[test]
+    fn newer_cli_response_parses_and_has_no_reset_credits() {
+        // 2026-11-14 實測（Claude Code 2.1.325）：rate_limits.cedar_ember（重置券）是 null，
+        // get_usage 不回報重置券，所以 Claude 沒有重置券資料（M-014）；額度照常解析
+        let content = include_str!("../../tests/fixtures/claude-reset-credits.jsonl");
+        let usage = parse_response(content).expect("新版 CLI 的回應應可解析");
+        assert_eq!(usage.status, StatusCode::Ok);
+        assert!(usage.quotas.iter().any(|quota| quota.id == "claude.five_hour"));
+        assert_eq!(usage.reset_credits, None);
     }
 }

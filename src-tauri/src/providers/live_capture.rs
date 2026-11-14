@@ -78,6 +78,89 @@ fn capture_sanitized_live_fixtures() {
     );
 }
 
+/// 重置券實測（M-014）：只查 Claude 與 Codex（不執行 agy），存成另外的 fixtures，不覆蓋原本的範例檔。
+/// 執行：cargo test --manifest-path src-tauri/Cargo.toml capture_reset_credit_fixtures -- --ignored
+#[test]
+#[ignore = "會執行已登入的 Claude 與 Codex 官方 CLI（不含 agy）；只在擷取重置券資料時由 AJ 同意後手動執行"]
+fn capture_reset_credit_fixtures() {
+    let fixture_directory = fixture_directory();
+    fs::create_dir_all(&fixture_directory).expect("應建立 fixtures 資料夾");
+
+    // Claude：只保留 usage 回應；重置券在 rate_limits.cedar_ember
+    let claude_lines = claude::capture_raw("", LIVE_QUERY_TIMEOUT).expect("Claude 實測查詢應成功");
+    let claude_sanitized =
+        redact_reset_credit_ids(&sanitize_json_lines(&only_claude_usage_lines(&claude_lines)));
+    assert_sanitized(&claude_sanitized);
+    write_fixture(
+        &fixture_directory.join("claude-reset-credits.jsonl"),
+        &claude_sanitized,
+    );
+
+    // Codex：重置券在 result.rateLimitResetCredits
+    let codex_lines = codex::capture_raw("", LIVE_QUERY_TIMEOUT).expect("Codex 實測查詢應成功");
+    let codex_sanitized = redact_reset_credit_ids(&sanitize_json_lines(&codex_lines));
+    assert_sanitized(&codex_sanitized);
+    write_fixture(
+        &fixture_directory.join("codex-reset-credits.jsonl"),
+        &codex_sanitized,
+    );
+}
+
+/// 重置券區塊（Claude 的 cedar_ember、Codex 的 rateLimitResetCredits）裡的券 ID 是後端識別碼，
+/// 寫進 fixture 前換成 <redacted-id>；區塊外的 ID（例如 Codex 的 limitId）解析時要用，不動。
+fn redact_reset_credit_ids(content: &str) -> String {
+    let mut output = Vec::new();
+    for line in content.lines() {
+        let mut value = serde_json::from_str::<Value>(line).expect("fixture 每行應為 JSON");
+        find_reset_sections(&mut value);
+        output.push(serde_json::to_string(&value).expect("應序列化 fixture"));
+    }
+    output.join("\n")
+}
+
+/// 往下找重置券區塊，找到就把裡面的 ID 遮掉
+fn find_reset_sections(value: &mut Value) {
+    match value {
+        Value::Object(object) => {
+            for (key, child) in object {
+                if key == "cedar_ember" || key == "rateLimitResetCredits" {
+                    redact_ids_inside(child);
+                } else {
+                    find_reset_sections(child);
+                }
+            }
+        }
+        Value::Array(array) => {
+            for child in array {
+                find_reset_sections(child);
+            }
+        }
+        _ => {}
+    }
+}
+
+/// 把欄位名稱是 id、或以 _id／Id 結尾的文字值換成 <redacted-id>
+fn redact_ids_inside(value: &mut Value) {
+    match value {
+        Value::Object(object) => {
+            for (key, child) in object {
+                let is_id_key = key == "id" || key.ends_with("_id") || key.ends_with("Id");
+                if is_id_key && child.is_string() {
+                    *child = Value::String("<redacted-id>".to_string());
+                } else {
+                    redact_ids_inside(child);
+                }
+            }
+        }
+        Value::Array(array) => {
+            for child in array {
+                redact_ids_inside(child);
+            }
+        }
+        _ => {}
+    }
+}
+
 #[test]
 #[ignore = "會執行三家已登入的官方 CLI；只在 M-002 明確實測時手動執行"]
 fn query_all_providers_as_unified_data() {

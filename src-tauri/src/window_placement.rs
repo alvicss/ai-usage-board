@@ -152,6 +152,51 @@ pub fn switch_mode_bounds(
     clamp_into_area(anchored, area)
 }
 
+/// 重置券小視窗（M-014）要放在哪裡：開在小工具旁邊、上緣對齊小工具上緣。
+/// 1. 小工具左邊放得下 → 放左邊（小工具預設在螢幕右上角，左邊通常有空間）；
+/// 2. 左邊放不下、右邊放得下 → 放右邊；
+/// 3. 兩邊都放不下（例如小工具很寬）→ 靠小工具右緣、疊在小工具上面，再整個推回工作區內。
+///
+/// 輸入：小工具目前的位置大小、小視窗大小（實體像素）、所有螢幕的工作區、主螢幕工作區、
+///       和小工具之間的距離（邏輯像素，會乘上縮放比例）。以小工具所在的螢幕為準，找不到時用主螢幕。
+pub fn popup_beside_bounds(
+    widget: &WindowBounds,
+    popup_size: (u32, u32),
+    areas: &[ScreenArea],
+    primary: &ScreenArea,
+    gap_logical: f64,
+) -> WindowBounds {
+    let area = match area_containing_center(widget, areas) {
+        Some(found) => found,
+        None => primary,
+    };
+    let gap = (gap_logical * area.scale_factor).round() as i32;
+    let popup_width = popup_size.0 as i32;
+    let widget_right = widget.x + widget.width as i32;
+
+    // 1. 放左邊
+    let left_x = widget.x - gap - popup_width;
+    // 2. 放右邊
+    let right_x = widget_right + gap;
+
+    let x = if left_x >= area.x {
+        left_x
+    } else if right_x + popup_width <= area.right() {
+        right_x
+    } else {
+        // 3. 兩邊都不夠：靠小工具右緣
+        widget_right - popup_width
+    };
+
+    let candidate = WindowBounds {
+        x,
+        y: widget.y,
+        width: popup_size.0,
+        height: popup_size.1,
+    };
+    clamp_into_area(candidate, area)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -305,5 +350,42 @@ mod tests {
         let result = switch_mode_bounds(on_left_monitor, (640, 240), &areas, &primary_area());
         // 右邊界 -40 維持不變，左邊延伸到 -680，仍在左邊螢幕內
         assert_eq!(result, bounds(-680, 24, 640, 240));
+    }
+
+    #[test]
+    fn reset_credit_popup_opens_left_of_the_widget() {
+        // 小工具在預設位置（主螢幕右上角）：小視窗放左邊、間距 8px、上緣對齊
+        let widget = bounds(1536, 24, 360, 230);
+        let result = popup_beside_bounds(&widget, (300, 160), &[primary_area()], &primary_area(), 8.0);
+        assert_eq!(result, bounds(1536 - 8 - 300, 24, 300, 160));
+    }
+
+    #[test]
+    fn reset_credit_popup_goes_right_when_the_left_side_is_full() {
+        // 小工具貼在螢幕左邊：改放右邊
+        let widget = bounds(24, 100, 360, 230);
+        let result = popup_beside_bounds(&widget, (300, 160), &[primary_area()], &primary_area(), 8.0);
+        assert_eq!(result, bounds(24 + 360 + 8, 100, 300, 160));
+    }
+
+    #[test]
+    fn reset_credit_popup_overlaps_a_very_wide_widget_and_stays_on_screen() {
+        // 小工具幾乎和螢幕一樣寬、而且在最下面：靠小工具右緣疊上去，下緣推回工作區內
+        let widget = bounds(10, 900, 1900, 230);
+        let result = popup_beside_bounds(&widget, (300, 200), &[primary_area()], &primary_area(), 8.0);
+        assert_eq!(result, bounds(1910 - 300, 1040 - 200, 300, 200));
+    }
+
+    #[test]
+    fn reset_credit_popup_uses_the_widgets_monitor_and_scale() {
+        // 小工具在左邊的外接螢幕（150% 縮放）：用那個螢幕的工作區與縮放算間距
+        let left_scaled = ScreenArea {
+            scale_factor: 1.5,
+            ..left_area()
+        };
+        let widget = bounds(-600, 30, 540, 345);
+        let areas = [primary_area(), left_scaled.clone()];
+        let result = popup_beside_bounds(&widget, (450, 240), &areas, &primary_area(), 8.0);
+        assert_eq!(result, bounds(-600 - 12 - 450, 30, 450, 240));
     }
 }

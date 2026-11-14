@@ -84,7 +84,7 @@ describe("警示", () => {
 describe("quotaLabel", () => {
   it("一般標籤與加上群組名稱的標籤", () => {
     expect(quotaLabel(zhTranslate, quota("quota.five_hour", null))).toBe("5 小時");
-    expect(quotaLabel(zhTranslate, quota("quota.weekly", "Gemini"))).toBe("Gemini 每週");
+    expect(quotaLabel(zhTranslate, quota("quota.weekly", "Argon"))).toBe("Argon 每週");
     expect(quotaLabel(zhTranslate, quota("quota.five_hour", "Claude+GPT"))).toBe("Claude+GPT 5 小時");
   });
 

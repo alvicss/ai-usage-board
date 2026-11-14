@@ -95,6 +95,15 @@ fn apply_bounds(window: &WebviewWindow, bounds: WindowBounds) -> tauri::Result<(
     window.set_size(PhysicalSize::new(bounds.width, bounds.height))
 }
 
+/// 小工具目前的位置大小、所有螢幕的工作區、主螢幕工作區（實體像素）。
+/// 重置券小視窗要開在小工具旁邊時用（reset_credits_window.rs）；小工具不存在或讀不到螢幕時回傳 None。
+pub fn bounds_and_screens(app: &AppHandle) -> Option<(WindowBounds, Vec<ScreenArea>, ScreenArea)> {
+    let window = app.get_webview_window(WIDGET_LABEL)?;
+    let bounds = current_bounds(&window).ok()?;
+    let (areas, primary) = screen_areas(&window)?;
+    Some((bounds, areas, primary))
+}
+
 /// 程式啟動時：恢復位置大小 → 套用外觀（亮暗、玻璃材質）→ 釘在最下層 → 顯示 → 從工作列與 Alt+Tab 移除。
 /// 視窗在 tauri.conf.json 設為一開始不顯示，避免先閃一下出現在錯的位置。
 pub fn prepare_on_startup(

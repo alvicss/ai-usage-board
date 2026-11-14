@@ -49,7 +49,8 @@ const previewSettings = computed<Settings>(() => {
     ...draft,
     providers: {
       ...draft.providers,
-      claude: { enabled: true, cli_path: "", visible_quotas: PREVIEW_CARD_QUOTA_IDS },
+      // 示範卡片沒有重置券（預覽只看外觀）
+      claude: { enabled: true, cli_path: "", visible_quotas: PREVIEW_CARD_QUOTA_IDS, show_reset_credits: false },
     },
   };
 });

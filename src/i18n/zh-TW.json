@@ -8,7 +8,8 @@
     "menu_settings": "設定…",
     "menu_about": "關於…",
     "quit": "結束",
-    "loading": "載入中…"
+    "loading": "載入中…",
+    "reset_credits": "重置券"
   },
   "widget": {
     "empty_title": "沒有啟用的服務",
@@ -16,6 +17,18 @@
     "no_quota": "沒有勾選要顯示的額度",
     "go_to": "切換到 {name}",
     "used": "已用 {percent}%"
+  },
+  "credits": {
+    "title": "重置券",
+    "label": "重置券",
+    "count": "{count} 張",
+    "next_expiry": "最快到期 {time}",
+    "expiry": "到期 {time}",
+    "never_expires": "不會過期",
+    "no_detail": "未提供到期時間",
+    "more_without_detail": "另有 {count} 張未提供到期時間",
+    "empty": "目前沒有重置券",
+    "close": "關閉"
   },
   "quota": {
     "five_hour": "5 小時",
@@ -173,7 +186,9 @@
       "fuse_advice": "請確認 agy 是最新版、而且沒有用 Git Bash 執行本程式後，再恢復查詢。",
       "fuse_reset": "我已確認，恢復查詢",
       "fuse_resetting": "已恢復，正在重新查詢 Antigravity…",
-      "fuse_reset_failed": "恢復失敗：{message}"
+      "fuse_reset_failed": "恢復失敗：{message}",
+      "reset_credits": "重置券",
+      "show_reset_credits": "在卡片顯示張數與最快到期時間"
     },
     "about": {
       "version": "版本",

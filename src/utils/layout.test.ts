@@ -69,6 +69,22 @@ describe("needsCompact", () => {
   it("已被強制精簡時一律精簡", () => {
     expect(needsCompact(999, 1, 1, true, "minimal")).toBe(true);
   });
+
+  it("多一行重置券（M-014）：預設大小兩個額度，簡約（百分比字最大）改精簡，玻璃、霓虹、工程師放得下", () => {
+    const { cardHeight, scale, forceCompact } = layout;
+    expect(needsCompact(cardHeight, 2, scale, forceCompact, "minimal", true)).toBe(true);
+    expect(needsCompact(cardHeight, 2, scale, forceCompact, "glass", true)).toBe(false);
+    expect(needsCompact(cardHeight, 2, scale, forceCompact, "neon", true)).toBe(false);
+    expect(needsCompact(cardHeight, 2, scale, forceCompact, "terminal", true)).toBe(false);
+    // 沒有重置券那一行時，簡約兩個額度照舊放得下
+    expect(needsCompact(cardHeight, 2, scale, forceCompact, "minimal", false)).toBe(false);
+  });
+
+  it("儀表：有重置券那一行時環再小一點", () => {
+    const withoutCredit = gaugeRingMaxHeight(layout.cardHeight, layout.scale, false);
+    const withCredit = gaugeRingMaxHeight(layout.cardHeight, layout.scale, false, true);
+    expect(withoutCredit - withCredit).toBeCloseTo(28 * layout.scale, 5);
+  });
 });
 
 describe("工程師主題的字元條格數", () => {

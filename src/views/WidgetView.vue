@@ -6,7 +6,8 @@
         - 算出主題、實際色系（跟隨 Windows 時即時切換）、縮放比例與排版，套在根元素的 data-* 與 CSS 變數上
           （data-material：這台 Windows 有沒有 Acrylic，玻璃主題依此決定樣子）；
         - 語言：設定手動選的優先，「自動」用 Rust 依 Windows 顯示語言與地區判斷的結果（FR-17），換語言時右鍵選單跟著重建；
-        - 右上角 ⟳ ⇄ ⚙ 按鈕、原生右鍵選單、拖曳視窗；倒數與「幾分鐘前」每 30 秒在畫面端自己更新，不重查；
+        - 右上角 ⟳ ⇄ 票券 ⚙ 按鈕（票券開關重置券小視窗，M-014）、原生右鍵選單、拖曳視窗；
+          倒數與「幾分鐘前」每 30 秒在畫面端自己更新，不重查；
         - 拖曳或縮放停下來後，請 Rust 記住目前顯示方式的位置大小（FR-14）；
         - 重複開啟程式時（單一執行個體），收到 widget-flash 事件就閃一下外框提示位置；
         - settings.toml 整份格式錯誤時，頂端顯示白話警告（FR-9）。
@@ -28,6 +29,7 @@ import {
   onSettingsChanged,
   onUsageUpdated,
   onWidgetFlash,
+  openResetCredits,
   openSettings,
   quitApp,
   refreshNow,
@@ -295,6 +297,7 @@ onBeforeUnmount(() => {
         :refreshing="refreshing"
         @refresh="refreshNow"
         @switch-mode="toggleMode"
+        @reset-credits="openResetCredits"
         @settings="openSettings()"
       />
       <CarouselLayout

@@ -38,9 +38,16 @@
   min-height: calc(24px * var(--scale));
 }
 
-/* 右上角按鈕落在這張卡片的標題列時，右側留位置 */
+/* 右上角按鈕（4 顆，M-014 加了票券）落在這張卡片的標題列時，右側留位置：4 × 26px＋3 × 2px 間距＋6px */
 .card-head.reserve-toolbar {
-  padding-right: calc(88px * var(--scale));
+  padding-right: calc(116px * var(--scale));
+}
+
+/* 並排橫排時，按鈕落在最右邊那張窄卡片的標題列，讓位 116px 後名稱只剩幾個字（例如「Anti…」）。
+   所以滑鼠不在小工具上時標題列不讓位、名稱完整顯示（按鈕同時隱藏，見 base.css 的 .toolbar）；
+   滑鼠移上來才讓位、顯示按鈕（2026-11-14）。工程師主題的按鈕在提示字元那一行，不受影響（themes/terminal.css）。 */
+.widget-shell:not([data-theme="terminal"]):not(:hover) .overview[data-direction="row"] .card-head.reserve-toolbar {
+  padding-right: 0;
 }
 
 .provider-dot {

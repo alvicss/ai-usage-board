@@ -214,6 +214,16 @@ fn fill_all_values(document: &mut DocumentMut, settings: &Settings) {
             quota_array.push(quota_id.as_str());
         }
         set_value(document, &section, "visible_quotas", Value::Array(quota_array));
+
+        // 重置券只有 Codex 會回報（M-014），只有 [providers.codex] 有這個欄位；其他兩家不寫，避免設定檔多出用不到的欄位
+        if name == "codex" {
+            set_value(
+                document,
+                &section,
+                "show_reset_credits",
+                Value::from(provider.show_reset_credits),
+            );
+        }
     }
 }
 

@@ -52,6 +52,25 @@ pub struct Quota {
     pub window_minutes: Option<u32>,
 }
 
+/// 一張重置券（M-014，41「統一用量格式」）。
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct ResetCredit {
+    /// 到期時間（epoch 秒）；None 代表不會過期
+    pub expires_at: Option<i64>,
+    /// CLI 提供的名稱，例如 Codex 的 "Full reset (Weekly + 5 hr)"；沒有時為 None（畫面只當滑鼠停留提示）
+    pub title: Option<String>,
+}
+
+/// 一家服務的重置券（M-014）。
+/// 目前只有 Codex 會回報；Claude CLI 的 get_usage 不含重置券（2026-11-14 實測），Antigravity 沒有重置券。
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct ResetCredits {
+    /// CLI 回報的可用張數；CLI 可能只給張數、或明細比張數少（明細有上限）
+    pub available_count: u32,
+    /// 有明細的可用券（只收 status = available 的），依 CLI 回報的順序
+    pub credits: Vec<ResetCredit>,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct ProviderUsage {
     pub id: ProviderId,
@@ -63,6 +82,10 @@ pub struct ProviderUsage {
     pub last_attempt_at: Option<i64>,
     pub last_success_at: Option<i64>,
     pub quotas: Vec<Quota>,
+    /// 重置券；None 代表這家不回報重置券。
+    /// serde(default)：M-014 以前寫的 cache.json 沒有這個欄位，讀進來當成 None，不必改快取版本。
+    #[serde(default)]
+    pub reset_credits: Option<ResetCredits>,
 }
 
 /// 一家查詢失敗的原因。

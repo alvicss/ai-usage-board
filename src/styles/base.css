@@ -1,6 +1,6 @@
 /*
  * 檔案：styles/base.css
- * 用途：小工具共用的基礎樣式：CSS 變數的保底值、透明視窗、小工具外框、頂端設定警告、右上角三顆按鈕、
+ * 用途：小工具共用的基礎樣式：CSS 變數的保底值、透明視窗、小工具外框、頂端設定警告、右上角四顆按鈕、
  *       重複開啟程式時的「閃一下提示位置」外框，以及瀏覽器預覽用的示意桌布。
  *       顏色、圓角、字型一律用 CSS 變數（--w-*），由 themes/<主題>.css 依 data-theme＋data-scheme 定義；
  *       尺寸寫成「43 的 px 值 × var(--scale)」，--scale 由 WidgetView 依視窗大小算出（utils/layout.ts）。
@@ -95,7 +95,7 @@ button {
   text-overflow: ellipsis;
 }
 
-/* ---------- 右上角三顆按鈕（固定在小工具右上角） ---------- */
+/* ---------- 右上角四顆按鈕（固定在小工具右上角） ---------- */
 .toolbar {
   position: absolute;
   z-index: 5;
@@ -110,6 +110,11 @@ button {
 
 .widget-shell:hover .toolbar {
   opacity: 1;
+}
+
+/* 並排橫排（工程師主題以外）：滑鼠不在小工具上時按鈕完全隱藏，讓最右邊卡片的名稱完整顯示（card.css 同一段說明） */
+.widget-shell:not([data-theme="terminal"]):not(:hover) .cards-area:has(.overview[data-direction="row"]) .toolbar {
+  opacity: 0;
 }
 
 .tool-button {

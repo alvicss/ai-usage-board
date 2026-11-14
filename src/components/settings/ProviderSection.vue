@@ -4,6 +4,7 @@
         - 啟用開關；
         - CLI 位置：顯示自動偵測結果；可手打或「瀏覽…」選 .exe／.cmd；「改回自動偵測」；檔案不存在時欄位下方即時提示；
         - 額度勾選清單：來自最新一次查到的額度（新出現的額度預設不勾，不另外標示）；
+        - 重置券（M-014，只有 Codex）：勾選「在卡片顯示張數與最快到期時間」；
         - Antigravity 保險絲跳脫時，顯示原因與「我已確認，恢復查詢」按鈕（事件交給上一層處理）。
         這個元件直接修改傳進來的「這一家的設定草稿」，按儲存之前不會寫檔。
   誰會用到：ProvidersPage。
@@ -62,6 +63,10 @@ const fuseText = computed(() => {
   return t("settings.providers.fuse_turns", { turns: fuse.num_turns, time });
 });
 
+/** 會回報重置券的服務（M-014）：目前只有 Codex；Claude CLI 不回報、Antigravity 沒有重置券 */
+const RESET_CREDIT_PROVIDERS: ProviderKey[] = ["codex"];
+const supportsResetCredits = computed(() => RESET_CREDIT_PROVIDERS.includes(props.providerId));
+
 function useAutoDetect() {
   props.providerDraft.cli_path = "";
 }
@@ -111,6 +116,17 @@ function useAutoDetect() {
             </label>
           </div>
           <p v-else class="field-hint">{{ t("settings.providers.no_quotas") }}</p>
+        </div>
+      </div>
+
+      <!-- 重置券（M-014）：只有會回報重置券的服務才有這個勾選 -->
+      <div v-if="supportsResetCredits" class="field">
+        <span class="field-label">{{ t("settings.providers.reset_credits") }}</span>
+        <div class="field-control">
+          <label class="check">
+            <input v-model="providerDraft.show_reset_credits" type="checkbox" />
+            <span>{{ t("settings.providers.show_reset_credits") }}</span>
+          </label>
         </div>
       </div>
     </div>

@@ -102,6 +102,7 @@ fn empty_provider(id: ProviderId, name: &str, enabled: bool) -> ProviderUsage {
         last_attempt_at: None,
         last_success_at: None,
         quotas: Vec::new(),
+        reset_credits: None,
     }
 }
 
@@ -175,6 +176,32 @@ mod tests {
         let loaded = load(&path, &settings);
         assert!(!loaded.providers[2].enabled);
         assert_eq!(loaded.providers[2].status, StatusCode::Disabled);
+        std::fs::remove_dir_all(directory).expect("應清除測試資料");
+    }
+
+    #[test]
+    fn old_cache_without_reset_credits_still_loads() {
+        // M-014 以前寫的 cache.json 沒有 reset_credits 欄位：要能照常讀進來（當成沒有重置券），不能丟掉舊資料
+        let directory = temporary_directory("old-format");
+        let path = directory.join("cache.json");
+        let settings = default_settings().expect("預設設定應有效");
+        let old_text = r#"{
+            "schema_version": 1,
+            "updated_at": 1700000000,
+            "providers": [{
+                "id": "codex", "name": "Codex", "enabled": true, "plan": "Plus", "status": "ok",
+                "status_detail": null, "last_attempt_at": 1700000000, "last_success_at": 1700000000,
+                "quotas": [{ "id": "codex.primary", "label_key": "quota.five_hour", "label_param": null,
+                             "used_percent": 42.0, "resets_at": 1700003600, "window_minutes": 300 }]
+            }]
+        }"#;
+        std::fs::write(&path, old_text).expect("應寫入舊格式快取");
+
+        let loaded = load(&path, &settings);
+        let codex = &loaded.providers[1];
+        assert_eq!(codex.status, StatusCode::Ok, "舊資料要保留");
+        assert_eq!(codex.quotas.len(), 1);
+        assert_eq!(codex.reset_credits, None);
         std::fs::remove_dir_all(directory).expect("應清除測試資料");
     }
 }

@@ -120,7 +120,7 @@ pub fn parse_response(content: &str) -> ProviderResult<ProviderUsage> {
             let quota = Quota {
                 id: format!("antigravity.{bucket_id}"),
                 label_key: label_key.to_string(),
-                label_param: Some(label_param),
+                label_param,
                 used_percent: clamp_percent((1.0 - remaining_fraction) * 100.0),
                 resets_at: bucket
                     .get("reset_time")
@@ -156,30 +156,33 @@ pub fn parse_response(content: &str) -> ProviderResult<ProviderUsage> {
         last_attempt_at: None,
         last_success_at: None,
         quotas,
+        // Antigravity 沒有重置券
+        reset_credits: None,
     })
 }
 
-/// 額度標籤前面要放的名稱（label_param），例如「Gemini 5 小時」的 Gemini。
+/// 額度標籤前面要放的名稱（label_param），例如「Argon 每週」的 Argon；回傳 None 代表不加名稱，只顯示「5 小時」「每週」。
 /// 認得的 bucket 用簡短名稱；不認得的（agy 日後新增的群組）用 agy 回報的群組原名，
 /// 不再用「ID 開頭是 gemini 就叫 Gemini」的寬鬆規則，避免新群組被誤標成 Gemini、和原本的額度撞名。
-fn label_name(bucket_id: &str, group_name: &str) -> String {
+fn label_name(bucket_id: &str, group_name: &str) -> Option<String> {
     // 「Gemini 4 Argon」群組（agy 2026-10 新增，只有每週額度）：ID 是 gemini-argon-wtu-weekly，
     // 也是 gemini 開頭，所以要比 Gemini 先判斷；只比對 gemini-argon 前綴，後面的 wtu 之類的字可能會變
     if bucket_id.starts_with("gemini-argon") {
-        return "Argon".to_string();
+        return Some("Argon".to_string());
     }
 
-    // 「Gemini Models」群組（Gemini Flash、Gemini Pro）
+    // 「Gemini Models」群組（Gemini Flash、Gemini Pro）：主要額度，不加名稱，顯示成「5 小時」「每週」
+    // （AJ 2026-11-14 要求拿掉「Gemini」字樣，M-013；和 Claude、Codex 卡片的主要額度一致）
     if bucket_id == "gemini-5h" || bucket_id == "gemini-weekly" {
-        return "Gemini".to_string();
+        return None;
     }
 
     // 「Claude and GPT models」群組（第三方模型 third-party，ID 是 3p-5h、3p-weekly）
     if bucket_id.starts_with("3p-") {
-        return "Claude+GPT".to_string();
+        return Some("Claude+GPT".to_string());
     }
 
-    group_name.to_string()
+    Some(group_name.to_string())
 }
 
 /// groups 裡有沒有任何一個 bucket（額度）。groups 是空陣列、或每個群組的 buckets 都是空的，就是沒有。
@@ -373,7 +376,8 @@ mod tests {
             ]
         );
 
-        // 標籤名稱：Argon 不能被誤標成 Gemini（舊規則會讓它和 Gemini 每週撞名）
+        // 標籤名稱：Argon 不能被誤標成 Gemini（舊規則會讓它和 Gemini 每週撞名）；
+        // Gemini 主要額度不加名稱（M-013），畫面顯示「5 小時」「每週」
         let names: Vec<Option<&str>> = usage
             .quotas
             .iter()
@@ -382,8 +386,8 @@ mod tests {
         assert_eq!(
             names,
             vec![
-                Some("Gemini"),
-                Some("Gemini"),
+                None,
+                None,
                 Some("Claude+GPT"),
                 Some("Claude+GPT"),
                 Some("Argon")

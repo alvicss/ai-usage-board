@@ -1,0 +1,184 @@
+/*
+ * 檔案：styles/reset-credits.css
+ * 用途：重置券（M-014）的樣式：
+ *       1. 卡片額度下方那一行（ResetCreditRow）：標籤｜圓形張數徽章｜最快到期時間；
+ *       2. 重置券小視窗（ResetCreditsView）：外框、卡片、標題列、✕ 按鈕直接沿用
+ *          .widget-shell／.provider-card／.card-head／.tool-button 的主題樣式，這裡只補清單的排法。
+ *       顏色與字型一律用主題的 CSS 變數（--w-ink、--w-muted、--w-line、--w-font、--w-num-font），
+ *       五種主題、亮暗兩色自動套用原本的風格；只有霓虹的發光、工程師的字級另外調整。
+ * 誰會用到：main.ts 載入；ResetCreditRow、ResetCreditsView。
+ */
+
+/* ---------- 卡片：有重置券那一行時，卡片分四列：標題列｜額度｜重置券｜頁尾 ---------- */
+.provider-card.has-credits {
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
+}
+
+.credit-row {
+  display: flex;
+  align-items: center;
+  gap: calc(8px * var(--scale));
+  min-width: 0;
+  font-size: calc(12px * var(--scale));
+  line-height: 1.2;
+}
+
+/* 標籤和額度列的標籤（.quota-label）同字級、同粗細 */
+.credit-label {
+  flex: none;
+  font-weight: 500;
+}
+
+/* 圓形數字徽章：一位數是正圓，兩位數以上自動拉長成膠囊形；數字用主題的數字字型 */
+.credit-badge {
+  display: inline-grid;
+  flex: none;
+  min-width: calc(18px * var(--scale));
+  height: calc(18px * var(--scale));
+  padding: 0 calc(4px * var(--scale));
+  place-items: center;
+  border: 1px solid var(--w-ink);
+  border-radius: 99px;
+  color: var(--w-ink);
+  font-family: var(--w-num-font);
+  font-size: calc(11px * var(--scale));
+  font-weight: 600;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 到期時間和額度列的重置時間（.reset-time）同顏色、同字級。
+   整段靠右（margin-left: auto 把左邊剩下的空間吃掉），右邊緣和上方額度列的最右邊對齊：
+   工程師主題對齊「每週」那行的重置時間，其他主題對齊百分比（AJ 2026-11-14 要求）。
+   文字太長放不下時，左邊空白縮成 0，再放不下就用「…」省略。 */
+.credit-expiry {
+  min-width: 0;
+  margin-left: auto;
+  overflow: hidden;
+  text-align: right;
+  color: var(--w-muted);
+  font-size: calc(11px * var(--scale));
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* 查詢失敗：和額度一樣淡化（顯示的是上次查到的資料） */
+.provider-card.failed .credit-row {
+  opacity: 0.55;
+  filter: saturate(0);
+}
+
+/* 工程師主題：字級和字元條那幾行一致 */
+[data-theme="terminal"] .credit-row {
+  font-size: calc(12.5px * var(--scale));
+}
+
+[data-theme="terminal"] .credit-expiry {
+  font-size: calc(11.5px * var(--scale));
+}
+
+/* 霓虹主題：徽章用青色外框，和服務名稱、百分比一樣帶淡淡的外發光 */
+[data-theme="neon"] .credit-badge {
+  border-color: #22e4ff;
+  box-shadow: 0 0 6px rgba(34, 228, 255, 0.45);
+  text-shadow: 0 0 8px currentColor;
+}
+
+/* ---------- 重置券小視窗 ---------- */
+/* 高度由內容決定（畫面量好後 Rust 調整視窗大小）；超過視窗最大高度時清單捲動 */
+.widget-shell.credits-shell {
+  height: auto;
+  max-height: 100vh;
+}
+
+.provider-card.credits-card {
+  display: flex;
+  flex: 0 1 auto;
+  flex-direction: column;
+  height: auto;
+  min-height: 0;
+}
+
+.credits-head {
+  gap: calc(8px * var(--scale));
+}
+
+/* ✕ 按鈕靠右；和小工具右上角的按鈕同一種樣式（.tool-button） */
+.credits-close {
+  flex: none;
+  margin-left: auto;
+}
+
+.credits-list {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+  scrollbar-color: var(--w-track) transparent;
+  scrollbar-width: thin;
+}
+
+/* 一張券一行：到期日期時間｜倒數｜服務；行與行之間用主題的細線分隔 */
+.credit-item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: calc(10px * var(--scale));
+  min-height: calc(28px * var(--scale));
+  padding: 0 calc(4px * var(--scale));
+  border-top: 1px solid var(--w-line);
+  font-size: calc(12px * var(--scale));
+}
+
+.credit-item:first-child {
+  border-top: 0;
+}
+
+.credit-when {
+  font-family: var(--w-num-font);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.credit-countdown {
+  overflow: hidden;
+  color: var(--w-muted);
+  font-size: calc(11px * var(--scale));
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* 服務：代表色小圓點＋名稱（Codex／Claude） */
+.credit-provider {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(6px * var(--scale));
+  font-size: calc(11.5px * var(--scale));
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* CLI 只給張數、沒給到期時間的那一行：說明文字佔前兩欄 */
+.credit-item.undetailed .credit-when {
+  grid-column: 1 / 3;
+  overflow: hidden;
+  color: var(--w-muted);
+  font-family: var(--w-font);
+  font-weight: 400;
+  text-overflow: ellipsis;
+}
+
+.credit-empty {
+  padding: calc(8px * var(--scale)) calc(4px * var(--scale));
+  color: var(--w-muted);
+  font-size: calc(12px * var(--scale));
+  text-align: center;
+}
+
+/* 霓虹主題：沒有細線（--w-line 是透明），行與行之間改用淡淡的軌道色 */
+[data-theme="neon"] .credit-item {
+  border-top-color: var(--w-track);
+}

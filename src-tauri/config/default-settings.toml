@@ -54,6 +54,7 @@ visible_quotas = ["claude.five_hour", "claude.seven_day"]   # 要顯示的額度
 enabled = true
 cli_path = ""
 visible_quotas = ["codex.primary", "codex.secondary"]
+show_reset_credits = true          # 卡片顯示重置券（張數與最快到期時間）/ Show reset credits on the card
 
 [providers.antigravity]
 enabled = true

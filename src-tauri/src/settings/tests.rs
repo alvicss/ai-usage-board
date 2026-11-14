@@ -360,3 +360,45 @@ fn saving_rejects_invalid_fields_and_repairs_broken_file() {
 
     fs::remove_dir_all(directory).expect("應清除測試資料夾");
 }
+
+#[test]
+fn reset_credit_switch_only_exists_for_codex() {
+    // M-014：只有 Codex 會回報重置券，預設顯示；其他兩家沒有這個欄位，讀進來是 false
+    let defaults = default_settings().expect("預設設定應有效");
+    assert!(defaults.providers.codex.show_reset_credits);
+    assert!(!defaults.providers.claude.show_reset_credits);
+    assert!(!defaults.providers.antigravity.show_reset_credits);
+
+    // 舊版設定檔（M-014 以前）沒有這一行：Codex 用預設值（顯示），不算錯誤
+    let mut old_text = String::new();
+    for line in DEFAULT_SETTINGS_TEXT.lines() {
+        if line.starts_with("show_reset_credits") {
+            continue;
+        }
+        old_text.push_str(line);
+        old_text.push('\n');
+    }
+    let loaded = load_from_text(&old_text).expect("舊版設定應可讀");
+    assert!(loaded.warnings.is_empty());
+    assert!(loaded.settings.providers.codex.show_reset_credits);
+
+    // 存檔：關掉後只寫進 [providers.codex]，其他兩家不會多出這個欄位
+    let directory = temporary_directory("reset-credit-switch");
+    let path = directory.join("settings.toml");
+    fs::write(&path, &old_text).expect("應寫入舊版設定");
+    let mut settings = loaded.settings;
+    settings.providers.codex.show_reset_credits = false;
+    write_settings(&path, &settings).expect("寫回應成功");
+
+    let written = fs::read_to_string(&path).expect("應可讀回");
+    assert_eq!(written.matches("show_reset_credits").count(), 1, "只有 Codex 有這個欄位");
+    let codex_at = written.find("[providers.codex]").expect("應有 Codex 段落");
+    let antigravity_at = written.find("[providers.antigravity]").expect("應有 Antigravity 段落");
+    let switch_at = written.find("show_reset_credits = false").expect("應寫入新的值");
+    assert!(codex_at < switch_at && switch_at < antigravity_at, "寫在 [providers.codex] 裡");
+
+    let reloaded = load_from_text(&written).expect("寫回的檔案應可再讀");
+    assert!(!reloaded.settings.providers.codex.show_reset_credits);
+
+    fs::remove_dir_all(directory).expect("應清除測試資料夾");
+}
